@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title or 'Screenshot' }} · Screenshot Inbox{% endblock %}
+{% block content %}
+  <section class="detail-shell">
+    <a class="back-link" href="/">← 목록</a>
+    <header class="detail-header">
+      <div>
+        <p class="eyebrow">SCREENSHOT {{ '%04d'|format(item.id) }}</p>
+        <h1>{{ item.title or item.file_path.split('\\')[-1] }}</h1>
+      </div>
+      <div class="detail-meta">
+        <span class="status large">{{ item.category or item.status }}</span>
+        {% if item.confidence is not none %}<span>신뢰도 {{ (item.confidence * 100)|round|int }}%</span>{% endif %}
+      </div>
+    </header>
+
+    <div class="detail-grid">
+      <section class="image-panel" aria-label="원본 스크린샷">
+        <img src="/screenshots/{{ item.id }}/image" alt="원본 스크린샷: {{ item.title or item.file_path }}">
+        <p title="{{ item.file_path }}">{{ item.file_path }}</p>
+      </section>
+
+      <section class="analysis-panel">
+        {% if item.status == 'completed' and item.analysis %}
+          <div class="analysis-section">
+            <h2>요약</h2>
+            <p>{{ item.summary or '요약이 없습니다.' }}</p>
+          </div>
+          {% set labels = {
+            'language': '언어', 'purpose': '문제/코드 목적', 'approach': '풀이 접근법',
+            'solution_codes': '정답 코드', 'issues': '발견된 문제', 'explanation': '상세 풀이',
+            'complexity': '시간·공간 복잡도', 'suggested_changes': '개선 사항',
+            'subject': '과목', 'question': '문제', 'choices': '선택지', 'answer': '정답',
+            'concepts': '핵심 개념', 'uncertainty': '불확실한 부분',
+            'application': '애플리케이션', 'error_message': '오류 메시지',
+            'possible_causes': '가능한 원인', 'recommended_steps': '해결 단계',
+            'topic': '주제', 'key_points': '핵심 내용', 'important_terms': '중요 용어',
+            'term_explanations': '핵심 용어 풀이', 'study_notes': '학습 노트',
+            'organization': '기관', 'event_name': '행사명',
+            'deadline': '마감일', 'eligibility': '대상', 'requirements': '요구 사항',
+            'actions': '해야 할 일', 'document_type': '문서 유형',
+            'important_values': '중요 값'
+          } %}
+          {% for key, value in item.analysis.details.items() %}
+            {% if value %}
+              <div class="analysis-section">
+                <h2>{{ labels.get(key, key.replace('_', ' ')|title) }}</h2>
+                {% if key == 'solution_codes' %}
+                  <div class="code-tabs" role="tablist" aria-label="정답 코드 언어 선택">
+                    <button type="button" class="code-tab active" data-code-tab="python">Python</button>
+                    <button type="button" class="code-tab" data-code-tab="java">Java</button>
+                    <button type="button" class="code-tab" data-code-tab="cpp">C++</button>
+                  </div>
+                  <pre class="solution-code" data-code-pane="python"><code>{{ value.get('python', '') }}</code></pre>
+                  <pre class="solution-code" data-code-pane="java" hidden><code>{{ value.get('java', '') }}</code></pre>
+                  <pre class="solution-code" data-code-pane="cpp" hidden><code>{{ value.get('cpp', '') }}</code></pre>
+                {% elif value is iterable and value is not string and value is not mapping %}
+                  <ul>{% for entry in value %}<li>{{ entry }}</li>{% endfor %}</ul>
+                {% else %}
+                  <p>{{ value }}</p>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% elif item.status == 'failed' %}
+          <div class="failure-box" role="alert">
+            <p class="eyebrow">ANALYSIS FAILED</p>
+            <h2>The screenshot is safe. The analysis did not finish.</h2>
+            <p>{{ item.error_message }}</p>
+            <form action="/screenshots/{{ item.id }}/retry" method="post">
+              <button type="submit">다시 분석</button>
+            </form>
+          </div>
+        {% else %}
+          <div class="processing-box">
+            <span class="spinner" aria-hidden="true"></span>
+            <div><h2>{{ item.status|title }}</h2><p>This page will refresh when analysis is ready.</p></div>
+          </div>
+        {% endif %}
+      </section>
+    </div>
+
+    <section class="chat-panel" id="chat">
+      <div class="chat-heading">
+        <div>
+          <p class="eyebrow">SCREENSHOT CHAT</p>
+          <h2>이 화면에 관해 계속 질문하기</h2>
+        </div>
+        <span>질문 시 스크린샷과 최근 대화가 설정된 AI로 전송됩니다.</span>
+      </div>
+      {% if chat_error %}<p class="chat-error" role="alert">{{ chat_error }}</p>{% endif %}
+      <div class="chat-messages">
+        {% for message in messages %}
+          <article class="chat-message role-{{ message.role }}">
+            <strong>{{ '나' if message.role == 'user' else 'AI' }}</strong>
+            <div class="chat-content">{{ message.content|markdown }}</div>
+          </article>
+        {% endfor %}
+      </div>
+      <form class="chat-form" action="/screenshots/{{ item.id }}/chat" method="post">
+        <label for="question">질문</label>
+        <textarea id="question" name="question" rows="3" maxlength="4000" required></textarea>
+        <button type="submit">AI에게 질문</button>
+      </form>
+    </section>
+  </section>
+{% endblock %}

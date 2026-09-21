@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Screenshot Inbox{% endblock %}
+{% block content %}
+  <section class="inbox-shell">
+    <div class="inbox-heading">
+      <div>
+        <p class="eyebrow">LOCAL TIMELINE</p>
+        <h1>Inbox</h1>
+      </div>
+      <p class="directory" title="{{ watch_directory or 'Not configured' }}">{{ watch_directory or 'No directory configured' }}</p>
+    </div>
+    <nav class="filters" aria-label="Filter screenshots by category">
+      <a href="/" class="filter {{ 'active' if not selected_category }}">All</a>
+      {% for category in categories %}
+        <a href="/?category={{ category }}" class="filter {{ 'active' if selected_category == category }}">{{ category|title }}</a>
+      {% endfor %}
+    </nav>
+
+    <div class="timeline" aria-live="polite">
+      {% set timeline = namespace(date_key='') %}
+      {% for item in items %}
+        {% if item.date_key != timeline.date_key %}
+          <header class="date-divider">
+            <span>{{ item.date_label }}</span>
+          </header>
+          {% set timeline.date_key = item.date_key %}
+        {% endif %}
+        <article class="timeline-item status-{{ item.status }}">
+          <time datetime="{{ item.detected_at_iso or item.detected_at }}">{{ item.time_label }}</time>
+          <a class="thumb" href="/screenshots/{{ item.id }}" aria-label="Open {{ item.title or 'screenshot' }}">
+            <img src="/screenshots/{{ item.id }}/image" alt="" loading="lazy">
+          </a>
+          <a class="item-copy" href="/screenshots/{{ item.id }}">
+            <div class="item-topline">
+              <h2>{{ item.title or item.file_path.split('\\')[-1] }}</h2>
+              <span class="status">{{ item.category or item.status }}</span>
+            </div>
+            <p>{{ item.summary or item.error_message or 'Waiting for analysis…' }}</p>
+            <span class="file-name">{{ item.file_path.split('\\')[-1] }}</span>
+          </a>
+          <form class="delete-form" action="/screenshots/{{ item.id }}/delete" method="post"
+                onsubmit="return confirm('Inbox 기록과 대화를 삭제할까요? 원본 스크린샷 파일은 유지됩니다.');">
+            <button class="trash-button" type="submit" title="Inbox에서 삭제 (원본 파일 유지)"
+                    aria-label="{{ item.title or '스크린샷' }} Inbox 기록 삭제">🗑</button>
+          </form>
+        </article>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-frame" aria-hidden="true"><span></span></div>
+          <h2>{{ 'No ' + selected_category + ' screenshots' if selected_category else 'Waiting for your next screenshot' }}</h2>
+          <p>{{ 'Choose another category or return to All.' if selected_category else 'New screenshots will appear here after they are saved.' }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}

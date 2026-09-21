@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A private local inbox for screenshot analysis.">
+    <title>{% block title %}Screenshot Inbox{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="stylesheet" href="/static/app.css">
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Screenshot Inbox home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Screenshot Inbox</span>
+      </a>
+      <div class="system-state">
+        <span class="state-dot {{ 'online' if watch_directory else 'offline' }}"></span>
+        <span>{{ 'Watching' if watch_directory else 'Directory not found' }}</span>
+        <span class="provider-label">{{ provider }}</span>
+      </div>
+    </header>
+    {% if not watch_directory %}
+      <aside class="banner" role="status">
+        No screenshot folder was detected. Set <code>SCREENSHOT_DIR</code> in <code>.env</code>, then restart.
+      </aside>
+    {% endif %}
+    <main>{% block content %}{% endblock %}</main>
+  </body>
+</html>
+
