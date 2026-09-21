@@ -114,6 +114,7 @@ def _object_from_text(raw: str) -> dict[str, Any]:
 def _mapping_as_text_items(value: dict[Any, Any]) -> list[str]:
     paired_keys = (
         ("term", "explanation"),
+        ("term", "definition"),
         ("name", "description"),
         ("concept", "definition"),
         ("용어", "설명"),
@@ -168,7 +169,7 @@ def _normalize_text_list(value: Any) -> list[str]:
         term_match = re.match(r"^(?:term|용어)\s*(?:—|:|-)\s*(.+)$", normalized[index], re.I)
         explanation_match = (
             re.match(
-                r"^(?:explanation|description|설명)\s*(?:—|:|-)\s*(.+)$",
+                r"^(?:explanation|definition|description|설명|정의)\s*(?:—|:|-)\s*(.+)$",
                 normalized[index + 1],
                 re.I,
             )

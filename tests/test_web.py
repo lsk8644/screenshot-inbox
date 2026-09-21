@@ -54,15 +54,21 @@ def test_inbox_detail_image_and_health(
             "id": screenshot_id,
             "status": "completed",
             "title": image_path.stem.replace("_", " ").replace("-", " ").strip().title(),
+            "analyzed_at": statuses[0]["analyzed_at"],
         }
     ]
     inbox_html = client.get("/").text
     assert 'id="toast-region"' in inbox_html
     script = client.get("/static/app.js").text
     assert "sessionStorage" in script
+    assert "screenshotInboxStatusesV2" in script
+    assert "analyzed_at" in script
     assert "refreshTimeline" in script
     assert "DOMParser" in script
+    assert "Notification.requestPermission" in script
+    assert "showSystemNotification" in script
     assert "1500" in script
+    assert 'id="notification-toggle"' in inbox_html
 
 
 def test_timeline_uses_seoul_date_and_24_hour_time() -> None:

@@ -56,6 +56,8 @@ The Inbox groups screenshots under `M.DD` headers using Asia/Seoul time and show
 
 While an Inbox page is open, analysis status is polled locally every 1.5 seconds. Status memory survives navigation and automatic detail refreshes within the tab. A newly completed analysis appears as a clickable notification in the lower-right corner for six seconds; existing completed records do not trigger notifications on the first visit. When the Inbox timeline is visible, new screenshots and status changes refresh the timeline in place without a full-page reload.
 
+The in-page notification cannot be blocked by browser notification settings. For a Windows/browser system notification, choose **알림 켜기** once in the top bar and approve the browser permission. A denied browser permission is shown as **알림 차단됨** and must be changed in the browser's site settings. Completion detection compares both status and `analyzed_at`, so fast reanalysis that finishes between polls is still detected.
+
 Each detail page includes a screenshot-aware chat. A question sends the screenshot and recent conversation to the configured AI provider, receives a Korean response, and stores the conversation in local SQLite. Deleting the Inbox record also removes that local conversation.
 
 In the question box, press **Enter** to send immediately and **Shift+Enter** for a new line. AI Markdown responses are rendered locally with safe headings, lists, emphasis, inline code, and fenced code blocks; raw HTML is escaped.

@@ -158,7 +158,7 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 
 ## Verification record
 
-- Unit/integration suite: 31 passed; two upstream TestClient deprecation warnings.
+- Unit/integration suite: 32 passed; two upstream TestClient deprecation warnings.
 - Ruff lint: passed.
 - Mypy strict type check: passed for 13 source files.
 - Python bytecode compilation: passed.
@@ -264,4 +264,13 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 - **Dependencies:** T-708, T-709
 - **Files:** `schemas.py`, `static/app.js`, tests, documentation
 - **Acceptance Criteria:** Paired objects render as `term: explanation`; status memory uses tab session storage; new IDs and status transitions refresh the visible timeline; completion toasts survive navigation and detail auto-refreshes.
+- **Status:** DONE
+
+### T-711
+- **Epic:** E4/E6 — Definition formatting and system notifications
+- **Title:** Combine term-definition pairs and add optional browser notifications
+- **Goal:** Render `term`/`definition` output as one line and make completion detection robust enough for fast analyses while optionally surfacing Windows/browser notifications.
+- **Dependencies:** T-709, T-710
+- **Files:** `schemas.py`, `web.py`, `templates/base.html`, `static/app.js`, `static/app.css`, tests, documentation
+- **Acceptance Criteria:** `term` plus `definition` becomes `term: definition`; completion revision uses `analyzed_at`; in-page toast remains unconditional; user-triggered Notification permission enables a clickable system notification; denied permission is visible.
 - **Status:** DONE

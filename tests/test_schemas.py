@@ -132,3 +132,21 @@ def test_labeled_lines_and_em_dash_entries_use_term_colon_explanation() -> None:
         "Pthreads: POSIX 표준 스레드 API입니다.",
         "Speedup: 개선 전후의 성능 비율입니다.",
     ]
+
+
+def test_term_definition_pairs_are_combined() -> None:
+    result = parse_analysis(
+        {
+            "category": "lecture",
+            "title": "Fork Join",
+            "details": {
+                "term_explanations": [
+                    "term: Fork",
+                    "definition: 작업을 여러 하위 작업으로 나누는 과정입니다.",
+                ]
+            },
+        }
+    )
+    assert result.details["term_explanations"] == [
+        "Fork: 작업을 여러 하위 작업으로 나누는 과정입니다."
+    ]

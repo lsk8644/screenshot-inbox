@@ -232,6 +232,7 @@ def create_app(
                 "id": item["id"],
                 "status": item["status"],
                 "title": item.get("title") or Path(item["file_path"]).name,
+                "analyzed_at": item.get("analyzed_at"),
             }
             for item in database.list_screenshots(limit=50)
         ]
