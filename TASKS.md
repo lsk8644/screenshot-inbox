@@ -301,3 +301,12 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 - **Files:** base, Inbox and detail templates, styles, tests, documentation
 - **Acceptance Criteria:** Timeline source filenames, watched-directory text, detail filesystem paths, provider label, and status dot are absent; the top-right area contains only Watching.
 - **Status:** DONE
+
+### T-715
+- **Epic:** E6/E8 — Reliable Windows notifications
+- **Title:** Resolve a registered native notification sender
+- **Goal:** Make native completion notifications use an application ID registered on the current Windows installation.
+- **Dependencies:** T-711
+- **Files:** notification module, tests, documentation
+- **Acceptance Criteria:** The toast script resolves Windows PowerShell through Get-StartApps, falls back to registered Edge, and does not use the invalid hard-coded sender ID; Windows master notification requirements are documented.
+- **Status:** DONE

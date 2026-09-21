@@ -31,8 +31,13 @@ _TOAST_SCRIPT = "\n".join(
         "$document.LoadXml($xml)",
         "$toast = [Windows.UI.Notifications.ToastNotification]::new($document)",
         (
+            "$appId = Get-StartApps | Where-Object { $_.Name -eq 'Windows PowerShell' } "
+            "| Select-Object -First 1 -ExpandProperty AppID"
+        ),
+        "if (-not $appId) { $appId = 'MSEdge' }",
+        (
             "[Windows.UI.Notifications.ToastNotificationManager]::"
-            "CreateToastNotifier('Microsoft.Windows.PowerShell').Show($toast)"
+            "CreateToastNotifier($appId).Show($toast)"
         ),
     )
 )

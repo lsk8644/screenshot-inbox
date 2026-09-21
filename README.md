@@ -58,6 +58,8 @@ While an Inbox page is open, analysis status is polled locally every 1.5 seconds
 
 The in-page notification cannot be blocked by browser notification settings. Analysis completion also triggers a native Windows notification directly from the background app, even when no browser is open. Clicking it opens the matching screenshot detail page. Completion detection compares both status and `analyzed_at`, so fast reanalysis that finishes between polls is still detected.
 
+Native notifications require the Windows master notification switch under **Settings > System > Notifications** to be enabled. The notifier resolves the registered Windows PowerShell application ID at runtime instead of relying on a hard-coded sender ID.
+
 Each detail page includes a screenshot-aware chat. A question sends the screenshot and recent conversation to the configured AI provider, receives a Korean response, and stores the conversation in local SQLite. Deleting the Inbox record also removes that local conversation.
 
 In the question box, press **Enter** to send immediately and **Shift+Enter** for a new line. AI Markdown responses are rendered locally with safe headings, lists, emphasis, inline code, and fenced code blocks; raw HTML is escaped.
