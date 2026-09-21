@@ -35,9 +35,6 @@ button { font: inherit; }
 .brand { display: inline-flex; gap: 11px; align-items: center; text-decoration: none; font-weight: 670; }
 .brand-mark { width: 18px; height: 18px; border: 2px solid var(--accent); box-shadow: inset 5px -5px 0 var(--accent); }
 .system-state { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .82rem; }
-.state-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--danger); }
-.state-dot.online { background: var(--accent); }
-.provider-label { margin-left: 8px; padding-left: 14px; border-left: 1px solid var(--line); }
 .banner { padding: 10px clamp(18px, 4vw, 52px); background: #322913; color: #f9dda0; border-bottom: 1px solid #58471f; font-size: .88rem; }
 .banner code { font-family: "Cascadia Code", monospace; }
 
@@ -45,7 +42,6 @@ button { font: inherit; }
 .inbox-heading, .detail-header { display: flex; justify-content: space-between; align-items: end; gap: 24px; }
 .eyebrow { margin: 0 0 7px; color: var(--accent); font: 700 .72rem/1.2 "Cascadia Code", monospace; letter-spacing: .12em; }
 h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.5rem); line-height: .98; letter-spacing: -.045em; }
-.directory { max-width: 55%; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font: .8rem "Cascadia Code", monospace; }
 
 .filters { display: flex; overflow-x: auto; gap: 4px; margin: 32px 0 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
 .filter { padding: 9px 13px; text-decoration: none; color: var(--muted); font-size: .88rem; border: 1px solid transparent; }
@@ -65,7 +61,6 @@ h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.5rem); line-height: .98; letter-sp
 .item-topline { display: flex; justify-content: space-between; align-items: start; gap: 16px; }
 .item-copy h2 { margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 1.08rem; font-weight: 650; }
 .item-copy p { margin: 8px 0 9px; color: #c4ccd6; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.file-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font: .72rem "Cascadia Code", monospace; }
 .status { flex: none; color: var(--accent); font: 700 .68rem "Cascadia Code", monospace; text-transform: uppercase; letter-spacing: .08em; }
 .status-failed .status { color: var(--danger); }
 .status-pending .status, .status-analyzing .status { color: var(--warning); }
@@ -88,7 +83,6 @@ h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.5rem); line-height: .98; letter-sp
 .detail-grid { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(340px, .88fr); gap: 32px; padding-top: 32px; align-items: start; }
 .image-panel { margin: 0; position: sticky; top: 90px; }
 .image-panel img { display: block; width: 100%; max-height: 70vh; object-fit: contain; background: #080a0d; border: 1px solid var(--line); }
-.image-panel > p { overflow: hidden; text-overflow: ellipsis; margin: 9px 0; white-space: nowrap; color: var(--muted); font: .7rem "Cascadia Code", monospace; }
 .analysis-panel { min-width: 0; }
 .analysis-section { padding: 0 0 24px; margin: 0 0 24px; border-bottom: 1px solid var(--line); }
 .analysis-section h2, .failure-box h2, .processing-box h2 { margin: 0 0 10px; font-size: .77rem; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); }
@@ -144,13 +138,11 @@ button:hover { filter: brightness(1.08); }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 760px) {
-  .provider-label { display: none; }
   .inbox-shell, .detail-shell { width: min(100% - 28px, 1120px); padding-top: 30px; }
   .inbox-heading { display: block; }
-  .directory { max-width: 100%; margin-top: 14px; }
   .timeline-item { grid-template-columns: 44px 76px minmax(0, 1fr) 34px; gap: 9px; }
   .thumb { height: 64px; }
-  .item-copy p, .file-name { display: none; }
+  .item-copy p { display: none; }
   .item-topline { display: block; }
   .item-copy h2 { margin-bottom: 7px; font-size: .95rem; }
   .detail-header { display: block; }

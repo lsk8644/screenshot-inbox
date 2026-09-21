@@ -42,8 +42,15 @@ def test_inbox_detail_image_and_health(
     app = create_app(make_settings(project_root, database.path), database, pipeline)
     client = TestClient(app)
     assert client.get("/").status_code == 200
-    assert "Screenshot Inbox" in client.get("/").text
-    assert client.get(f"/screenshots/{screenshot_id}").status_code == 200
+    inbox_html = client.get("/").text
+    assert "Screenshot Inbox" in inbox_html
+    assert "Watching" in inbox_html
+    assert 'class="provider-label"' not in inbox_html
+    assert 'class="directory"' not in inbox_html
+    assert 'class="file-name"' not in inbox_html
+    detail_html = client.get(f"/screenshots/{screenshot_id}").text
+    assert str(image_path.parent) not in detail_html
+    assert "<p title=" not in detail_html
     assert client.get(f"/screenshots/{screenshot_id}/image").status_code == 200
     health = client.get("/api/health").json()
     assert health["status"] == "ok"
@@ -57,7 +64,6 @@ def test_inbox_detail_image_and_health(
             "analyzed_at": statuses[0]["analyzed_at"],
         }
     ]
-    inbox_html = client.get("/").text
     assert 'id="toast-region"' in inbox_html
     script = client.get("/static/app.js").text
     assert "sessionStorage" in script

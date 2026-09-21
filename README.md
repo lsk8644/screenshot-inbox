@@ -52,7 +52,7 @@ screenshot-inbox
 
 Open [http://127.0.0.1:8765](http://127.0.0.1:8765). Keep the PowerShell window open. New PNG, JPG, JPEG, and WEBP screenshots appear automatically. The console logs `WATCH`, `NEW`, `QUEUE`, `ANALYZING`, `DONE`, `RETRY`, and `FAILED` events without logging credentials.
 
-The Inbox groups screenshots under `M.DD` headers using Asia/Seoul time and shows each event in 24-hour `HH:MM` format. Newer dates and screenshots appear first. The trash button removes only the Inbox metadata, analysis, and local conversation; it never deletes the original screenshot file.
+The Inbox groups screenshots under `M.DD` headers using Asia/Seoul time and shows each event in 24-hour `HH:MM` format. Newer dates and screenshots appear first. Source filenames and filesystem paths remain hidden from the Inbox and detail UI. The trash button removes only the Inbox metadata, analysis, and local conversation; it never deletes the original screenshot file.
 
 While an Inbox page is open, analysis status is polled locally every 1.5 seconds. Status memory survives navigation and automatic detail refreshes within the tab. A newly completed analysis appears as a clickable notification in the lower-right corner for six seconds; existing completed records do not trigger notifications on the first visit. When the Inbox timeline is visible, new screenshots and status changes refresh the timeline in place without a full-page reload.
 
@@ -137,7 +137,7 @@ Set an existing absolute path in `.env`:
 SCREENSHOT_DIR=C:\Users\YourName\Pictures\Screenshots
 ```
 
-Restart the app. Check the `[WATCH]` console line and the directory shown at the top of the Inbox.
+Restart the app and check the `[WATCH]` console line. Filesystem paths are intentionally hidden from the Inbox UI.
 
 ### HTTP 429
 

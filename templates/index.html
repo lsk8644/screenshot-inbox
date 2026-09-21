@@ -7,7 +7,6 @@
         <p class="eyebrow">LOCAL TIMELINE</p>
         <h1>Inbox</h1>
       </div>
-      <p class="directory" title="{{ watch_directory or 'Not configured' }}">{{ watch_directory or 'No directory configured' }}</p>
     </div>
     <nav class="filters" aria-label="Filter screenshots by category">
       <a href="/" class="filter {{ 'active' if not selected_category }}">All</a>
@@ -36,7 +35,6 @@
               <span class="status">{{ item.category or item.status }}</span>
             </div>
             <p>{{ item.summary or item.error_message or 'Waiting for analysis…' }}</p>
-            <span class="file-name">{{ item.file_path.split('\\')[-1] }}</span>
           </a>
           <form class="delete-form" action="/screenshots/{{ item.id }}/delete" method="post"
                 onsubmit="return confirm('Inbox 기록과 대화를 삭제할까요? 원본 스크린샷 파일은 유지됩니다.');">

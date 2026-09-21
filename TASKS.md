@@ -292,3 +292,12 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 - **Files:** provider, schema, detail template, tests, documentation
 - **Acceptance Criteria:** Contest markers trigger a code-only second pass after problem misclassification; all three solution strings are required; sample output hardcoding is explicitly prohibited; the standalone language field is not stored or rendered.
 - **Status:** DONE
+
+### T-714
+- **Epic:** E4/E8 — Minimal local UI
+- **Title:** Hide source names and paths from the interface
+- **Goal:** Keep the Inbox focused on analysis results instead of implementation and filesystem metadata.
+- **Dependencies:** T-401, T-712
+- **Files:** base, Inbox and detail templates, styles, tests, documentation
+- **Acceptance Criteria:** Timeline source filenames, watched-directory text, detail filesystem paths, provider label, and status dot are absent; the top-right area contains only Watching.
+- **Status:** DONE

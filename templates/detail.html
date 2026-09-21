@@ -16,8 +16,7 @@
 
     <div class="detail-grid">
       <section class="image-panel" aria-label="원본 스크린샷">
-        <img src="/screenshots/{{ item.id }}/image" alt="원본 스크린샷: {{ item.title or item.file_path }}">
-        <p title="{{ item.file_path }}">{{ item.file_path }}</p>
+        <img src="/screenshots/{{ item.id }}/image" alt="원본 스크린샷: {{ item.title or '분석 이미지' }}">
       </section>
 
       <section class="analysis-panel">

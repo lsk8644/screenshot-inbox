@@ -15,11 +15,7 @@
         <span class="brand-mark" aria-hidden="true"></span>
         <span>Screenshot Inbox</span>
       </a>
-      <div class="system-state">
-        <span class="state-dot {{ 'online' if watch_directory else 'offline' }}"></span>
-        <span>{{ 'Watching' if watch_directory else 'Directory not found' }}</span>
-        <span class="provider-label">{{ provider }}</span>
-      </div>
+      <div class="system-state">Watching</div>
     </header>
     {% if not watch_directory %}
       <aside class="banner" role="status">
