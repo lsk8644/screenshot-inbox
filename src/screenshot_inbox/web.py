@@ -225,4 +225,15 @@ def create_app(
             "provider": pipeline.provider.name,
         }
 
+    @app.get("/api/screenshots/status")
+    def screenshot_statuses() -> list[dict[str, Any]]:
+        return [
+            {
+                "id": item["id"],
+                "status": item["status"],
+                "title": item.get("title") or Path(item["file_path"]).name,
+            }
+            for item in database.list_screenshots(limit=50)
+        ]
+
     return app

@@ -78,3 +78,22 @@ def test_lecture_term_explanations_are_normalized() -> None:
         }
     )
     assert result.details["term_explanations"] == ["Volume은 데이터의 규모입니다."]
+
+
+def test_mapping_entries_and_saved_mapping_strings_are_flattened() -> None:
+    result = parse_analysis(
+        {
+            "category": "lecture",
+            "title": "성능 법칙",
+            "details": {
+                "term_explanations": [
+                    {"Amdahl's Law": "순차 영역이 전체 성능 향상의 병목이 됩니다."},
+                    "{'Speedup': '개선 전후의 성능 비율입니다.'}",
+                ]
+            },
+        }
+    )
+    assert result.details["term_explanations"] == [
+        "Amdahl's Law — 순차 영역이 전체 성능 향상의 병목이 됩니다.",
+        "Speedup — 개선 전후의 성능 비율입니다.",
+    ]

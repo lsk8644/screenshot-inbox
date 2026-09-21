@@ -68,3 +68,27 @@ def test_chat_and_record_deletion_preserve_original_file(tmp_path: Path) -> None
     assert database.delete_screenshot(screenshot_id) is True
     assert database.get(screenshot_id) is None
     assert image.is_file()
+
+
+def test_saved_mapping_strings_are_normalized_when_read(tmp_path: Path) -> None:
+    database = ScreenshotDatabase(tmp_path / "inbox.db")
+    database.initialize()
+    screenshot_id, _ = database.insert_screenshot(tmp_path / "lecture.png", "lecture", "2026")
+    database.mark_completed(
+        screenshot_id,
+        {
+            "category": "lecture",
+            "confidence": 0.8,
+            "title": "Amdahl",
+            "summary": "설명",
+            "extracted_text": "",
+            "details": {
+                "term_explanations": ["{'Speedup': '개선 전후의 성능 비율입니다.'}"]
+            },
+        },
+    )
+    record = database.get(screenshot_id)
+    assert record is not None
+    assert record["analysis"]["details"]["term_explanations"] == [
+        "Speedup — 개선 전후의 성능 비율입니다."
+    ]

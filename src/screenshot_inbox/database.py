@@ -8,6 +8,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
+from screenshot_inbox.schemas import parse_analysis
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS screenshots (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -204,5 +206,6 @@ class ScreenshotDatabase:
     def _decode(row: sqlite3.Row) -> dict[str, Any]:
         value = dict(row)
         raw = value.get("analysis_json")
-        value["analysis"] = json.loads(raw) if raw else None
+        payload = json.loads(raw) if raw else None
+        value["analysis"] = parse_analysis(payload).as_dict() if isinstance(payload, dict) else None
         return value

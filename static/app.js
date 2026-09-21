@@ -28,3 +28,48 @@ document.querySelectorAll(".chat-form").forEach((form) => {
     if (question.value.trim()) form.requestSubmit();
   });
 });
+
+const toastRegion = document.querySelector("#toast-region");
+const knownStatuses = new Map();
+let statusPollingInitialized = false;
+
+function showAnalysisToast(item) {
+  if (!toastRegion) return;
+  const toast = document.createElement("a");
+  toast.className = "analysis-toast";
+  toast.href = `/screenshots/${item.id}`;
+  const label = document.createElement("span");
+  label.textContent = "분석 완료";
+  const title = document.createElement("strong");
+  title.textContent = item.title || "새 스크린샷";
+  toast.append(label, title);
+  toastRegion.append(toast);
+  window.setTimeout(() => toast.classList.add("visible"), 20);
+  window.setTimeout(() => {
+    toast.classList.remove("visible");
+    window.setTimeout(() => toast.remove(), 220);
+  }, 6000);
+}
+
+async function pollAnalysisStatuses() {
+  try {
+    const response = await fetch("/api/screenshots/status", { cache: "no-store" });
+    if (!response.ok) return;
+    const items = await response.json();
+    items.forEach((item) => {
+      const previous = knownStatuses.get(item.id);
+      const becameCompleted = previous && previous !== "completed" && item.status === "completed";
+      const arrivedCompleted = statusPollingInitialized && !previous && item.status === "completed";
+      if (becameCompleted || arrivedCompleted) showAnalysisToast(item);
+      knownStatuses.set(item.id, item.status);
+    });
+    statusPollingInitialized = true;
+  } catch (_error) {
+    // The local server may be restarting; the next poll will recover.
+  }
+}
+
+if (toastRegion) {
+  pollAnalysisStatuses();
+  window.setInterval(pollAnalysisStatuses, 2500);
+}

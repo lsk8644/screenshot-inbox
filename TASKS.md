@@ -158,7 +158,7 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 
 ## Verification record
 
-- Unit/integration suite: 27 passed; two upstream TestClient deprecation warnings.
+- Unit/integration suite: 29 passed; two upstream TestClient deprecation warnings.
 - Ruff lint: passed.
 - Mypy strict type check: passed for 13 source files.
 - Python bytecode compilation: passed.
@@ -171,6 +171,7 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 - Error recovery filtering, original-preserving record deletion, local chat persistence, provider chat payloads, and Python/Java/C++ tabs: covered by automated tests.
 - Educational term expansion and normalized concept explanations: covered by automated tests.
 - Safe chat Markdown rendering and removal of redundant chat helper text: covered by automated tests.
+- Mapping-shaped explanation recovery, long-text wrapping, and completion-status notification API: covered by automated tests.
 
 ## Runtime follow-up
 
@@ -235,4 +236,22 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 - **Dependencies:** T-602
 - **Files:** `launch_screenshot_inbox.ps1`, `README.md`
 - **Acceptance Criteria:** Existing healthy servers are reused; missing servers start hidden; the launcher waits for health before opening the default browser; runtime logs remain ignored under `work/`.
+- **Status:** DONE
+
+### T-708
+- **Epic:** E4/E6 — Resilient detail rendering
+- **Title:** Flatten mapping-shaped explanation entries
+- **Goal:** Prevent AI-returned dictionaries or previously stringified dictionaries from rendering as raw Python mappings or overflowing the detail panel.
+- **Dependencies:** T-301, T-502, T-705
+- **Files:** `schemas.py`, `database.py`, `static/app.css`, tests
+- **Acceptance Criteria:** Mapping entries become `term — explanation` list items; saved legacy strings are safely recovered without code execution; long content wraps; existing records improve without another AI request.
+- **Status:** DONE
+
+### T-709
+- **Epic:** E6 — Completion feedback
+- **Title:** Show lower-right analysis completion notifications
+- **Goal:** Notify the user in an open Inbox browser page when a screenshot transitions to completed without replaying notifications for existing history.
+- **Dependencies:** T-401, T-501, T-502
+- **Files:** `web.py`, `templates/base.html`, `static/app.js`, `static/app.css`, tests, documentation
+- **Acceptance Criteria:** A local status endpoint exposes recent IDs/statuses/titles; initial polling seeds state silently; new completions show a clickable six-second lower-right toast; polling recovers after server restarts.
 - **Status:** DONE

@@ -92,7 +92,7 @@ h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.5rem); line-height: .98; letter-sp
 .analysis-panel { min-width: 0; }
 .analysis-section { padding: 0 0 24px; margin: 0 0 24px; border-bottom: 1px solid var(--line); }
 .analysis-section h2, .failure-box h2, .processing-box h2 { margin: 0 0 10px; font-size: .77rem; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); }
-.analysis-section p, .analysis-section li { line-height: 1.65; }
+.analysis-section p, .analysis-section li { overflow-wrap: anywhere; line-height: 1.65; }
 .analysis-section p { margin: 0; }
 .analysis-section ul { margin: 0; padding-left: 20px; }
 .analysis-section li + li { margin-top: 7px; }
@@ -126,6 +126,11 @@ pre { margin: 0; padding: 14px; border-top: 1px solid var(--line); white-space: 
 .chat-form label { grid-column: 1 / -1; color: var(--muted); font-size: .78rem; }
 .chat-form textarea { width: 100%; resize: vertical; padding: 12px; color: var(--text); background: var(--panel); border: 1px solid var(--line); font: inherit; }
 .chat-form textarea:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+.toast-region { position: fixed; right: 22px; bottom: 22px; z-index: 30; display: grid; gap: 10px; width: min(360px, calc(100vw - 32px)); pointer-events: none; }
+.analysis-toast { display: grid; gap: 5px; padding: 14px 16px; color: var(--text); background: #17241f; border: 1px solid #35634f; box-shadow: 0 14px 36px rgba(0, 0, 0, .42); text-decoration: none; opacity: 0; transform: translateY(12px); transition: opacity .2s ease, transform .2s ease; pointer-events: auto; }
+.analysis-toast.visible { opacity: 1; transform: translateY(0); }
+.analysis-toast span { color: var(--accent); font: 700 .68rem "Cascadia Code", monospace; letter-spacing: .09em; }
+.analysis-toast strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .92rem; }
 .failure-box, .processing-box { border: 1px solid var(--line); background: var(--panel); padding: 24px; }
 .failure-box { border-left: 3px solid var(--danger); }
 .failure-box h2 { color: var(--text); font-size: 1rem; line-height: 1.5; text-transform: none; letter-spacing: 0; }

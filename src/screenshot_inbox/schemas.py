@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import json
 import re
 from dataclasses import dataclass
@@ -110,6 +111,48 @@ def _object_from_text(raw: str) -> dict[str, Any]:
     return cast(dict[str, Any], value)
 
 
+def _mapping_as_text_items(value: dict[Any, Any]) -> list[str]:
+    items: list[str] = []
+    for raw_key, raw_value in value.items():
+        key = str(raw_key).strip()
+        if isinstance(raw_value, list):
+            description = ", ".join(str(entry).strip() for entry in raw_value if entry)
+        else:
+            description = str(raw_value).strip()
+        if key and description:
+            items.append(f"{key} — {description}")
+        elif key:
+            items.append(key)
+        elif description:
+            items.append(description)
+    return items
+
+
+def _normalize_text_list(value: Any) -> list[str]:
+    entries = value if isinstance(value, list) else [value]
+    normalized: list[str] = []
+    for entry in entries:
+        if isinstance(entry, dict):
+            normalized.extend(_mapping_as_text_items(entry))
+            continue
+        if isinstance(entry, str):
+            text = entry.strip()
+            if text.startswith("{") and text.endswith("}"):
+                try:
+                    recovered = ast.literal_eval(text)
+                except (SyntaxError, ValueError):
+                    recovered = None
+                if isinstance(recovered, dict):
+                    normalized.extend(_mapping_as_text_items(recovered))
+                    continue
+            if text:
+                normalized.append(text)
+            continue
+        if entry is not None:
+            normalized.append(str(entry))
+    return normalized
+
+
 def parse_analysis(value: str | dict[str, Any]) -> AnalysisResult:
     payload = _object_from_text(value) if isinstance(value, str) else value
     raw_category = str(payload.get("category", "other")).lower().strip()
@@ -136,8 +179,8 @@ def parse_analysis(value: str | dict[str, Any]) -> AnalysisResult:
     normalized_details: dict[str, Any] = {}
     for key, default in DETAIL_DEFAULTS[category].items():
         item = details.get(key, default)
-        if isinstance(default, list) and not isinstance(item, list):
-            item = [str(item)] if item else []
+        if isinstance(default, list):
+            item = _normalize_text_list(item) if item else []
         elif isinstance(default, dict):
             source = item if isinstance(item, dict) else {}
             item = {name: str(source.get(name, "")) for name in default}

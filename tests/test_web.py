@@ -48,6 +48,16 @@ def test_inbox_detail_image_and_health(
     health = client.get("/api/health").json()
     assert health["status"] == "ok"
     assert health["watching"] is False
+    statuses = client.get("/api/screenshots/status").json()
+    assert statuses == [
+        {
+            "id": screenshot_id,
+            "status": "completed",
+            "title": image_path.stem.replace("_", " ").replace("-", " ").strip().title(),
+        }
+    ]
+    inbox_html = client.get("/").text
+    assert 'id="toast-region"' in inbox_html
 
 
 def test_timeline_uses_seoul_date_and_24_hour_time() -> None:
