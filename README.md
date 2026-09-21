@@ -70,7 +70,7 @@ python -m screenshot_inbox.main
 
 ### Desktop shortcut
 
-`launch_screenshot_inbox.ps1` checks the local health endpoint, starts Screenshot Inbox in the background when needed, waits until it is ready, and opens the Inbox in the default browser. A Windows shortcut can target PowerShell with this script so the app is available from a single desktop icon.
+`launch_screenshot_inbox.ps1` checks the local health endpoint, starts Screenshot Inbox in the background when needed, waits until it is ready, and opens the Inbox in a standalone Edge or Chrome app window without browser tabs or an address bar. It falls back to the default browser only when neither app-capable browser is installed. A Windows shortcut can target PowerShell with this script so the app is available from a single desktop icon.
 
 ## Screenshot directory detection
 

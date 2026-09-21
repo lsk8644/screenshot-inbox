@@ -59,4 +59,19 @@ if (-not (Test-ScreenshotInbox)) {
     }
 }
 
-Start-Process $appUrl
+$appBrowserCandidates = @(
+    (Join-Path ${env:ProgramFiles(x86)} "Microsoft\Edge\Application\msedge.exe"),
+    (Join-Path $env:ProgramFiles "Microsoft\Edge\Application\msedge.exe"),
+    (Join-Path $env:ProgramFiles "Google\Chrome\Application\chrome.exe"),
+    (Join-Path ${env:ProgramFiles(x86)} "Google\Chrome\Application\chrome.exe")
+)
+$appBrowser = $appBrowserCandidates |
+    Where-Object { $_ -and (Test-Path -LiteralPath $_) } |
+    Select-Object -First 1
+
+if ($appBrowser) {
+    Start-Process -FilePath $appBrowser -ArgumentList "--app=$appUrl"
+}
+else {
+    Start-Process $appUrl
+}

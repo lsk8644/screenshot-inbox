@@ -158,7 +158,7 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 
 ## Verification record
 
-- Unit/integration suite: 33 passed; two upstream TestClient deprecation warnings.
+- Unit/integration suite: 34 passed; two upstream TestClient deprecation warnings.
 - Ruff lint: passed.
 - Mypy strict type check: passed for 13 source files.
 - Python bytecode compilation: passed.
@@ -273,4 +273,13 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 - **Dependencies:** T-709, T-710
 - **Files:** `schemas.py`, `web.py`, `templates/base.html`, `static/app.js`, `static/app.css`, tests, documentation
 - **Acceptance Criteria:** `term` plus `definition` becomes `term: definition`; completion revision uses `analyzed_at`; in-page toast remains unconditional; the background process sends a clickable native Windows notification without browser permission.
+- **Status:** DONE
+
+### T-712
+- **Epic:** E8 — Windows app experience
+- **Title:** Open Screenshot Inbox as a standalone app window
+- **Goal:** Make the desktop icon open the local Inbox without ordinary browser chrome while preserving the local-only server and one-click startup.
+- **Dependencies:** T-707
+- **Files:** `launch_screenshot_inbox.ps1`, tests, documentation
+- **Acceptance Criteria:** The launcher prefers Edge or Chrome app mode, keeps the local URL and hidden background server, and falls back to the default browser when neither executable exists.
 - **Status:** DONE
