@@ -90,5 +90,5 @@ def test_saved_mapping_strings_are_normalized_when_read(tmp_path: Path) -> None:
     record = database.get(screenshot_id)
     assert record is not None
     assert record["analysis"]["details"]["term_explanations"] == [
-        "Speedup — 개선 전후의 성능 비율입니다."
+        "Speedup: 개선 전후의 성능 비율입니다."
     ]

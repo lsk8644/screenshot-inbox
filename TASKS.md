@@ -158,7 +158,7 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 
 ## Verification record
 
-- Unit/integration suite: 29 passed; two upstream TestClient deprecation warnings.
+- Unit/integration suite: 31 passed; two upstream TestClient deprecation warnings.
 - Ruff lint: passed.
 - Mypy strict type check: passed for 13 source files.
 - Python bytecode compilation: passed.
@@ -172,6 +172,7 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 - Educational term expansion and normalized concept explanations: covered by automated tests.
 - Safe chat Markdown rendering and removal of redundant chat helper text: covered by automated tests.
 - Mapping-shaped explanation recovery, long-text wrapping, and completion-status notification API: covered by automated tests.
+- Paired term-definition rendering, session-persistent completion tracking, and live timeline refresh triggers: covered by automated tests.
 
 ## Runtime follow-up
 
@@ -254,4 +255,13 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 - **Dependencies:** T-401, T-501, T-502
 - **Files:** `web.py`, `templates/base.html`, `static/app.js`, `static/app.css`, tests, documentation
 - **Acceptance Criteria:** A local status endpoint exposes recent IDs/statuses/titles; initial polling seeds state silently; new completions show a clickable six-second lower-right toast; polling recovers after server restarts.
+- **Status:** DONE
+
+### T-710
+- **Epic:** E4/E6 — Live readable results
+- **Title:** Combine term-definition objects and live-refresh the Inbox
+- **Goal:** Render paired `term`/`explanation` objects as one readable line, preserve completion tracking across navigation, and show new screenshots without manual reloads.
+- **Dependencies:** T-708, T-709
+- **Files:** `schemas.py`, `static/app.js`, tests, documentation
+- **Acceptance Criteria:** Paired objects render as `term: explanation`; status memory uses tab session storage; new IDs and status transitions refresh the visible timeline; completion toasts survive navigation and detail auto-refreshes.
 - **Status:** DONE

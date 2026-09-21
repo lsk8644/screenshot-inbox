@@ -54,7 +54,7 @@ Open [http://127.0.0.1:8765](http://127.0.0.1:8765). Keep the PowerShell window 
 
 The Inbox groups screenshots under `M.DD` headers using Asia/Seoul time and shows each event in 24-hour `HH:MM` format. Newer dates and screenshots appear first. The trash button removes only the Inbox metadata, analysis, and local conversation; it never deletes the original screenshot file.
 
-While an Inbox page is open, analysis status is polled locally. A newly completed analysis appears as a clickable notification in the lower-right corner for six seconds; existing completed records do not trigger notifications on initial page load.
+While an Inbox page is open, analysis status is polled locally every 1.5 seconds. Status memory survives navigation and automatic detail refreshes within the tab. A newly completed analysis appears as a clickable notification in the lower-right corner for six seconds; existing completed records do not trigger notifications on the first visit. When the Inbox timeline is visible, new screenshots and status changes refresh the timeline in place without a full-page reload.
 
 Each detail page includes a screenshot-aware chat. A question sends the screenshot and recent conversation to the configured AI provider, receives a Korean response, and stores the conversation in local SQLite. Deleting the Inbox record also removes that local conversation.
 

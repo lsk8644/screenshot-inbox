@@ -112,6 +112,18 @@ def _object_from_text(raw: str) -> dict[str, Any]:
 
 
 def _mapping_as_text_items(value: dict[Any, Any]) -> list[str]:
+    paired_keys = (
+        ("term", "explanation"),
+        ("name", "description"),
+        ("concept", "definition"),
+        ("용어", "설명"),
+    )
+    for term_key, explanation_key in paired_keys:
+        if term_key in value and explanation_key in value:
+            term = str(value.get(term_key, "")).strip()
+            explanation = str(value.get(explanation_key, "")).strip()
+            if term and explanation:
+                return [f"{term}: {explanation}"]
     items: list[str] = []
     for raw_key, raw_value in value.items():
         key = str(raw_key).strip()
@@ -120,7 +132,7 @@ def _mapping_as_text_items(value: dict[Any, Any]) -> list[str]:
         else:
             description = str(raw_value).strip()
         if key and description:
-            items.append(f"{key} — {description}")
+            items.append(f"{key}: {description}")
         elif key:
             items.append(key)
         elif description:
@@ -150,7 +162,26 @@ def _normalize_text_list(value: Any) -> list[str]:
             continue
         if entry is not None:
             normalized.append(str(entry))
-    return normalized
+    combined: list[str] = []
+    index = 0
+    while index < len(normalized):
+        term_match = re.match(r"^(?:term|용어)\s*(?:—|:|-)\s*(.+)$", normalized[index], re.I)
+        explanation_match = (
+            re.match(
+                r"^(?:explanation|description|설명)\s*(?:—|:|-)\s*(.+)$",
+                normalized[index + 1],
+                re.I,
+            )
+            if index + 1 < len(normalized)
+            else None
+        )
+        if term_match and explanation_match:
+            combined.append(f"{term_match.group(1).strip()}: {explanation_match.group(1).strip()}")
+            index += 2
+            continue
+        combined.append(normalized[index].replace(" — ", ": ", 1))
+        index += 1
+    return combined
 
 
 def parse_analysis(value: str | dict[str, Any]) -> AnalysisResult:

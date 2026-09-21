@@ -94,6 +94,41 @@ def test_mapping_entries_and_saved_mapping_strings_are_flattened() -> None:
         }
     )
     assert result.details["term_explanations"] == [
-        "Amdahl's Law — 순차 영역이 전체 성능 향상의 병목이 됩니다.",
-        "Speedup — 개선 전후의 성능 비율입니다.",
+        "Amdahl's Law: 순차 영역이 전체 성능 향상의 병목이 됩니다.",
+        "Speedup: 개선 전후의 성능 비율입니다.",
+    ]
+
+
+def test_term_explanation_object_becomes_one_readable_line() -> None:
+    result = parse_analysis(
+        {
+            "category": "lecture",
+            "title": "Pthreads",
+            "details": {
+                "term_explanations": [
+                    {"term": "Pthreads", "explanation": "POSIX 표준 스레드 API입니다."}
+                ]
+            },
+        }
+    )
+    assert result.details["term_explanations"] == ["Pthreads: POSIX 표준 스레드 API입니다."]
+
+
+def test_labeled_lines_and_em_dash_entries_use_term_colon_explanation() -> None:
+    result = parse_analysis(
+        {
+            "category": "lecture",
+            "title": "Pthreads",
+            "details": {
+                "term_explanations": [
+                    "term — Pthreads",
+                    "explanation — POSIX 표준 스레드 API입니다.",
+                    "Speedup — 개선 전후의 성능 비율입니다.",
+                ]
+            },
+        }
+    )
+    assert result.details["term_explanations"] == [
+        "Pthreads: POSIX 표준 스레드 API입니다.",
+        "Speedup: 개선 전후의 성능 비율입니다.",
     ]

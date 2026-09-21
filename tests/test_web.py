@@ -58,6 +58,11 @@ def test_inbox_detail_image_and_health(
     ]
     inbox_html = client.get("/").text
     assert 'id="toast-region"' in inbox_html
+    script = client.get("/static/app.js").text
+    assert "sessionStorage" in script
+    assert "refreshTimeline" in script
+    assert "DOMParser" in script
+    assert "1500" in script
 
 
 def test_timeline_uses_seoul_date_and_24_hour_time() -> None:

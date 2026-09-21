@@ -30,8 +30,14 @@ document.querySelectorAll(".chat-form").forEach((form) => {
 });
 
 const toastRegion = document.querySelector("#toast-region");
-const knownStatuses = new Map();
-let statusPollingInitialized = false;
+const storedStatuses = window.sessionStorage.getItem("screenshotInboxStatuses");
+let knownStatuses = new Map();
+try {
+  knownStatuses = new Map(storedStatuses ? JSON.parse(storedStatuses) : []);
+} catch (_error) {
+  knownStatuses = new Map();
+}
+let statusPollingInitialized = knownStatuses.size > 0;
 
 function showAnalysisToast(item) {
   if (!toastRegion) return;
@@ -51,18 +57,40 @@ function showAnalysisToast(item) {
   }, 6000);
 }
 
+async function refreshTimeline() {
+  const timeline = document.querySelector(".timeline");
+  if (!timeline) return;
+  try {
+    const response = await fetch(window.location.href, { cache: "no-store" });
+    if (!response.ok) return;
+    const documentText = await response.text();
+    const updatedDocument = new DOMParser().parseFromString(documentText, "text/html");
+    const updatedTimeline = updatedDocument.querySelector(".timeline");
+    if (updatedTimeline) timeline.replaceChildren(...updatedTimeline.childNodes);
+  } catch (_error) {
+    // The next status poll will retry.
+  }
+}
+
 async function pollAnalysisStatuses() {
   try {
     const response = await fetch("/api/screenshots/status", { cache: "no-store" });
     if (!response.ok) return;
     const items = await response.json();
+    let timelineChanged = false;
     items.forEach((item) => {
       const previous = knownStatuses.get(item.id);
       const becameCompleted = previous && previous !== "completed" && item.status === "completed";
       const arrivedCompleted = statusPollingInitialized && !previous && item.status === "completed";
       if (becameCompleted || arrivedCompleted) showAnalysisToast(item);
+      if (statusPollingInitialized && previous !== item.status) timelineChanged = true;
       knownStatuses.set(item.id, item.status);
     });
+    window.sessionStorage.setItem(
+      "screenshotInboxStatuses",
+      JSON.stringify(Array.from(knownStatuses.entries()).slice(-100)),
+    );
+    if (timelineChanged) refreshTimeline();
     statusPollingInitialized = true;
   } catch (_error) {
     // The local server may be restarting; the next poll will recover.
@@ -71,5 +99,5 @@ async function pollAnalysisStatuses() {
 
 if (toastRegion) {
   pollAnalysisStatuses();
-  window.setInterval(pollAnalysisStatuses, 2500);
+  window.setInterval(pollAnalysisStatuses, 1500);
 }
