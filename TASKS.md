@@ -310,3 +310,12 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 - **Files:** notification module, tests, documentation
 - **Acceptance Criteria:** The toast script registers the per-user ScreenshotInbox.Local identity and Screenshot Inbox display name, sends through that identity, and does not use the PowerShell sender ID; Windows master notification requirements are documented.
 - **Status:** DONE
+
+### T-716
+- **Epic:** E6/E8 — Native app identity
+- **Title:** Install the Screenshot Inbox notification shortcut
+- **Goal:** Give Windows a complete local AppUserModelID registration so branded notifications are delivered instead of being dropped or attributed to PowerShell.
+- **Dependencies:** T-707, T-715
+- **Files:** Windows shortcut helper, registration and launcher scripts, notification module, tests, documentation
+- **Acceptance Criteria:** A per-user Start Menu shortcut contains ScreenshotInbox.Local; launcher registration requires no administrator access; the notifier uses the same ID; GitHub remains source backup only and runtime stays local.
+- **Status:** DONE

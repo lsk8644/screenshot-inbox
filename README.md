@@ -58,7 +58,7 @@ While an Inbox page is open, analysis status is polled locally every 1.5 seconds
 
 The in-page notification cannot be blocked by browser notification settings. Analysis completion also triggers a native Windows notification directly from the background app, even when no browser is open. Clicking it opens the matching screenshot detail page. Completion detection compares both status and `analyzed_at`, so fast reanalysis that finishes between polls is still detected.
 
-Native notifications require the Windows master notification switch under **Settings > System > Notifications** to be enabled. The notifier registers a per-user `ScreenshotInbox.Local` identity and display name so Windows attributes completion notifications to **Screenshot Inbox**, not PowerShell.
+Native notifications require the Windows master notification switch under **Settings > System > Notifications** to be enabled. The launcher installs a per-user Start Menu shortcut carrying the `ScreenshotInbox.Local` AppUserModelID, and the notifier uses the same identity so Windows attributes completion notifications to **Screenshot Inbox**, not PowerShell.
 
 Each detail page includes a screenshot-aware chat. A question sends the screenshot and recent conversation to the configured AI provider, receives a Korean response, and stores the conversation in local SQLite. Deleting the Inbox record also removes that local conversation.
 
@@ -73,6 +73,8 @@ python -m screenshot_inbox.main
 ### Desktop shortcut
 
 `launch_screenshot_inbox.ps1` checks the local health endpoint, starts Screenshot Inbox in the background when needed, waits until it is ready, and opens the Inbox in a standalone Edge or Chrome app window without browser tabs or an address bar. It falls back to the default browser only when neither app-capable browser is installed. A Windows shortcut can target PowerShell with this script so the app is available from a single desktop icon.
+
+The launcher also runs `register_notification_app.ps1`, which installs the current-user Start Menu shortcut required for a dedicated Windows toast identity. No administrator access or remote runtime is required.
 
 ## Screenshot directory detection
 

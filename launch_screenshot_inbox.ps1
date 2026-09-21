@@ -3,6 +3,11 @@ $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $appUrl = "http://127.0.0.1:8765/"
 $healthUrl = "http://127.0.0.1:8765/api/health"
+$notificationRegistration = Join-Path $projectRoot "register_notification_app.ps1"
+
+if (Test-Path -LiteralPath $notificationRegistration) {
+    & $notificationRegistration
+}
 
 function Test-ScreenshotInbox {
     try {
