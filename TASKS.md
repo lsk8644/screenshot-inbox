@@ -304,9 +304,9 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 
 ### T-715
 - **Epic:** E6/E8 — Reliable Windows notifications
-- **Title:** Resolve a registered native notification sender
-- **Goal:** Make native completion notifications use an application ID registered on the current Windows installation.
+- **Title:** Register a dedicated native notification sender
+- **Goal:** Make Windows attribute completion notifications to Screenshot Inbox instead of the PowerShell host process.
 - **Dependencies:** T-711
 - **Files:** notification module, tests, documentation
-- **Acceptance Criteria:** The toast script resolves Windows PowerShell through Get-StartApps, falls back to registered Edge, and does not use the invalid hard-coded sender ID; Windows master notification requirements are documented.
+- **Acceptance Criteria:** The toast script registers the per-user ScreenshotInbox.Local identity and Screenshot Inbox display name, sends through that identity, and does not use the PowerShell sender ID; Windows master notification requirements are documented.
 - **Status:** DONE

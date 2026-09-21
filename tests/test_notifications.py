@@ -25,7 +25,9 @@ def test_windows_notification_uses_safe_environment(monkeypatch: Any) -> None:
     assert command[0].endswith("powershell.exe")
     assert "-EncodedCommand" in command
     script = base64.b64decode(command[-1]).decode("utf-16-le")
-    assert "Get-StartApps" in script
+    assert "ScreenshotInbox.Local" in script
+    assert "DisplayName" in script
+    assert "Screenshot Inbox" in script
     assert "CreateToastNotifier($appId)" in script
     assert "Microsoft.Windows.PowerShell" not in script
     assert options["env"]["SCREENSHOT_INBOX_TOAST_BODY"] == "Fork-Join 분석"

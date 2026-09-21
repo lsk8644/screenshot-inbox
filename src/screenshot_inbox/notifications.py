@@ -30,11 +30,19 @@ _TOAST_SCRIPT = "\n".join(
         "$document = New-Object Windows.Data.Xml.Dom.XmlDocument",
         "$document.LoadXml($xml)",
         "$toast = [Windows.UI.Notifications.ToastNotification]::new($document)",
+        "$appId = 'ScreenshotInbox.Local'",
         (
-            "$appId = Get-StartApps | Where-Object { $_.Name -eq 'Windows PowerShell' } "
-            "| Select-Object -First 1 -ExpandProperty AppID"
+            r"$registryPath = 'HKCU:\Software\Classes\AppUserModelId\' + $appId"
         ),
-        "if (-not $appId) { $appId = 'MSEdge' }",
+        "New-Item -Path $registryPath -Force | Out-Null",
+        (
+            "New-ItemProperty -Path $registryPath -Name 'DisplayName' "
+            "-Value 'Screenshot Inbox' -PropertyType String -Force | Out-Null"
+        ),
+        (
+            "New-ItemProperty -Path $registryPath -Name 'ShowInSettings' "
+            "-Value 1 -PropertyType DWord -Force | Out-Null"
+        ),
         (
             "[Windows.UI.Notifications.ToastNotificationManager]::"
             "CreateToastNotifier($appId).Show($toast)"
