@@ -54,7 +54,6 @@ DETAIL_DEFAULTS: dict[Category, dict[str, Any]] = {
         "actions": [],
     },
     "code": {
-        "language": "",
         "purpose": "",
         "approach": "",
         "solution_codes": {"python": "", "java": "", "cpp": ""},

@@ -52,6 +52,7 @@ def test_code_solution_fields_are_normalized() -> None:
     assert result.details["solution_codes"]["python"] == "print(sum(values))"
     assert result.details["solution_codes"]["java"] == "System.out.println(sum);"
     assert result.details["solution_codes"]["cpp"] == ""
+    assert "language" not in result.details
     assert result.details["approach"] == ""
     assert result.details["complexity"] == ""
 

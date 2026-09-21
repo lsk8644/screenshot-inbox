@@ -32,10 +32,31 @@ error: application, error_message, possible_causes[], recommended_steps[]
 problem: subject, question, choices[], answer, explanation, concepts[], uncertainty
 lecture: topic, key_points[], important_terms[], term_explanations[], study_notes[]
 notice: organization, event_name, deadline, eligibility, requirements[], actions[]
-code: language, purpose, approach, solution_codes{python,java,cpp}, explanation,
+code: purpose, approach, solution_codes{python,java,cpp}, explanation,
 complexity, issues[], suggested_changes[]
 document: document_type, key_points[], important_values[]
 other: {}"""
+
+CODE_ONLY_PROMPT = """The screenshot is a programming problem. The top-level category value must
+be the exact string "code"; do not create a category_code key.
+Solve the general problem, not merely the visible sample. Return runnable and complete Python,
+Java, and C++ implementations under details.solution_codes, plus Korean purpose, approach,
+explanation, complexity, issues, and suggested_changes. Do not return a language field.
+Preserve the original problem statement in extracted_text. Return one JSON object without
+Markdown, using exactly this shape:
+{"category":"code","confidence":0.0,"title":"","summary":"","extracted_text":"",
+"details":{"purpose":"","approach":"","solution_codes":{"python":"","java":"","cpp":""},
+"explanation":"","complexity":"","issues":[],"suggested_changes":[]}}"""
+
+PROGRAMMING_MARKERS = (
+    "codeforces",
+    "atcoder",
+    "leetcode",
+    "baekjoon",
+    "time limit per test",
+    "memory limit per test",
+    "competitive programming",
+)
 
 
 class OpenAICompatibleProvider:
@@ -96,6 +117,73 @@ class OpenAICompatibleProvider:
         except (KeyError, IndexError, TypeError, ValueError) as exc:
             raise ProviderError(f"Provider response was malformed: {exc}") from exc
 
+    @staticmethod
+    def _looks_like_programming_problem(result: AnalysisResult) -> bool:
+        if result.category == "code":
+            return True
+        if result.category != "problem":
+            return False
+        visible_text = " ".join(
+            (result.title, result.summary, result.extracted_text)
+        ).lower()
+        if any(marker in visible_text for marker in PROGRAMMING_MARKERS):
+            return True
+        section_markers = sum(
+            marker in visible_text
+            for marker in ("\ninput\n", "\noutput\n", "constraints", "example input")
+        )
+        return section_markers >= 2
+
+    @staticmethod
+    def _has_complete_solution_codes(result: AnalysisResult) -> bool:
+        codes = result.details.get("solution_codes")
+        return isinstance(codes, dict) and all(
+            isinstance(codes.get(language), str) and codes[language].strip()
+            for language in ("python", "java", "cpp")
+        )
+
+    def _parse_analysis_body(self, body: dict[str, Any]) -> AnalysisResult:
+        try:
+            return parse_analysis(self._message_text(body))
+        except ValueError as exc:
+            raise ProviderError(
+                f"Provider response was malformed: {exc}",
+                retryable=True,
+            ) from exc
+
+    def _parse_code_repair_body(
+        self, body: dict[str, Any], fallback: AnalysisResult
+    ) -> AnalysisResult:
+        text = self._message_text(body)
+        try:
+            payload = json.loads(text)
+        except json.JSONDecodeError:
+            return self._parse_analysis_body(body)
+        if not isinstance(payload, dict):
+            return self._parse_analysis_body(body)
+
+        details = payload.get("details")
+        if not isinstance(details, dict):
+            detail_names = (
+                "purpose",
+                "approach",
+                "solution_codes",
+                "explanation",
+                "complexity",
+                "issues",
+                "suggested_changes",
+            )
+            details = {name: payload.get(name) for name in detail_names if name in payload}
+        normalized = {
+            "category": "code",
+            "confidence": payload.get("confidence", fallback.confidence),
+            "title": payload.get("title") or fallback.title,
+            "summary": payload.get("summary") or fallback.summary,
+            "extracted_text": payload.get("extracted_text") or fallback.extracted_text,
+            "details": details,
+        }
+        return parse_analysis(normalized)
+
     def analyze(self, image_path: Path) -> AnalysisResult:
         mime = mimetypes.guess_type(image_path.name)[0] or "image/png"
         encoded = base64.b64encode(image_path.read_bytes()).decode("ascii")
@@ -112,7 +200,8 @@ class OpenAICompatibleProvider:
                             "text": (
                                 "이 스크린샷을 분석하세요. 설명과 답변은 한국어로 작성하고, "
                                 "프로그래밍 문제라면 Python, Java, C++ 정답 코드와 "
-                                "풀이를 포함하세요. "
+                                "일반 입력 전체를 처리하는 풀이를 포함하세요. 예제 출력만 "
+                                "하드코딩하지 마세요. "
                                 "마크다운 없이 하나의 간결한 JSON 객체만 반환하세요."
                             ),
                         },
@@ -127,10 +216,38 @@ class OpenAICompatibleProvider:
             "max_tokens": 8192,
         }
         body = self._complete(payload)
-        try:
-            return parse_analysis(self._message_text(body))
-        except ValueError as exc:
-            raise ProviderError(f"Provider response was malformed: {exc}") from exc
+        result = self._parse_analysis_body(body)
+        if not self._looks_like_programming_problem(result):
+            return result
+        if result.category == "code" and self._has_complete_solution_codes(result):
+            return result
+
+        payload["messages"] = [
+            {"role": "system", "content": CODE_ONLY_PROMPT},
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": (
+                            "이 프로그래밍 문제를 완전히 풀고 한국어로 설명하세요. "
+                            "Python, Java, C++ 정답 코드를 모두 반환하세요."
+                        ),
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:{mime};base64,{encoded}"},
+                    },
+                ],
+            },
+        ]
+        corrected = self._parse_code_repair_body(self._complete(payload), result)
+        if corrected.category != "code" or not self._has_complete_solution_codes(corrected):
+            raise ProviderError(
+                "Provider omitted one or more required programming solutions",
+                retryable=True,
+            )
+        return corrected
 
     def chat(self, image_path: Path, history: list[dict[str, Any]], question: str) -> str:
         mime = mimetypes.guess_type(image_path.name)[0] or "image/png"

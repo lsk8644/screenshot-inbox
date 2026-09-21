@@ -158,7 +158,7 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 
 ## Verification record
 
-- Unit/integration suite: 34 passed; two upstream TestClient deprecation warnings.
+- Unit/integration suite: 36 passed; two upstream TestClient deprecation warnings.
 - Ruff lint: passed.
 - Mypy strict type check: passed for 13 source files.
 - Python bytecode compilation: passed.
@@ -282,4 +282,13 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 - **Dependencies:** T-707
 - **Files:** `launch_screenshot_inbox.ps1`, tests, documentation
 - **Acceptance Criteria:** The launcher prefers Edge or Chrome app mode, keeps the local URL and hidden background server, and falls back to the default browser when neither executable exists.
+- **Status:** DONE
+
+### T-713
+- **Epic:** E3/E4 — Reliable programming solutions
+- **Title:** Repair programming-problem misclassification and missing code
+- **Goal:** Ensure recognizable competitive-programming screenshots return complete Python, Java, and C++ solutions without a redundant language metadata row.
+- **Dependencies:** T-301, T-704
+- **Files:** provider, schema, detail template, tests, documentation
+- **Acceptance Criteria:** Contest markers trigger a code-only second pass after problem misclassification; all three solution strings are required; sample output hardcoding is explicitly prohibited; the standalone language field is not stored or rendered.
 - **Status:** DONE
