@@ -227,3 +227,12 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 - **Files:** `web.py`, `templates/detail.html`, `static/app.js`, `static/app.css`, tests, documentation
 - **Acceptance Criteria:** Empty helper and placeholder text are absent; Enter submits; Shift+Enter remains multiline; Markdown code/lists/emphasis render; HTML is escaped.
 - **Status:** DONE
+
+### T-707
+- **Epic:** E8 — Windows launch experience
+- **Title:** Add a one-click desktop launcher
+- **Goal:** Open the Inbox from a desktop shortcut, starting the local server in the background only when it is not already healthy.
+- **Dependencies:** T-602
+- **Files:** `launch_screenshot_inbox.ps1`, `README.md`
+- **Acceptance Criteria:** Existing healthy servers are reused; missing servers start hidden; the launcher waits for health before opening the default browser; runtime logs remain ignored under `work/`.
+- **Status:** DONE
