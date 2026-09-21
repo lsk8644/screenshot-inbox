@@ -51,12 +51,18 @@ def test_successful_processing_updates_database(tmp_path: Path, image_path: Path
     database = ScreenshotDatabase(tmp_path / "inbox.db")
     database.initialize()
     screenshot_id, _ = database.insert_screenshot(image_path, sha256_file(image_path), "2026-01-01")
-    pipeline = AnalysisPipeline(database, SuccessProvider())
+    notifications: list[tuple[int, str]] = []
+    pipeline = AnalysisPipeline(
+        database,
+        SuccessProvider(),
+        completion_notifier=lambda item_id, title: notifications.append((item_id, title)),
+    )
     pipeline.process_now(screenshot_id)
     record = database.get(screenshot_id)
     assert record is not None
     assert record["status"] == "completed"
     assert record["category"] == "problem"
+    assert notifications == [(screenshot_id, "Test problem")]
 
 
 def test_retry_limit_marks_failed(tmp_path: Path, image_path: Path) -> None:

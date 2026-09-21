@@ -30,7 +30,6 @@ document.querySelectorAll(".chat-form").forEach((form) => {
 });
 
 const toastRegion = document.querySelector("#toast-region");
-const notificationToggle = document.querySelector("#notification-toggle");
 const storedStatuses = window.sessionStorage.getItem("screenshotInboxStatusesV2");
 let knownStatuses = new Map();
 try {
@@ -39,43 +38,6 @@ try {
   knownStatuses = new Map();
 }
 let statusPollingInitialized = knownStatuses.size > 0;
-
-function updateNotificationToggle() {
-  if (!notificationToggle || !("Notification" in window)) return;
-  if (Notification.permission === "default") {
-    notificationToggle.hidden = false;
-    notificationToggle.disabled = false;
-    notificationToggle.textContent = "알림 켜기";
-  } else if (Notification.permission === "denied") {
-    notificationToggle.hidden = false;
-    notificationToggle.disabled = true;
-    notificationToggle.textContent = "알림 차단됨";
-  } else {
-    notificationToggle.hidden = true;
-  }
-}
-
-if (notificationToggle && "Notification" in window) {
-  updateNotificationToggle();
-  notificationToggle.addEventListener("click", async () => {
-    await Notification.requestPermission();
-    updateNotificationToggle();
-  });
-}
-
-function showSystemNotification(item) {
-  if (!("Notification" in window) || Notification.permission !== "granted") return;
-  const notification = new Notification("Screenshot Inbox · 분석 완료", {
-    body: item.title || "새 스크린샷 분석이 완료됐습니다.",
-    icon: new URL("/static/favicon.svg", window.location.origin).href,
-    tag: `screenshot-analysis-${item.id}-${item.analyzed_at || "completed"}`,
-  });
-  notification.addEventListener("click", () => {
-    window.focus();
-    window.location.href = `/screenshots/${item.id}`;
-    notification.close();
-  });
-}
 
 function showAnalysisToast(item) {
   if (!toastRegion) return;
@@ -88,7 +50,6 @@ function showAnalysisToast(item) {
   title.textContent = item.title || "새 스크린샷";
   toast.append(label, title);
   toastRegion.append(toast);
-  showSystemNotification(item);
   window.setTimeout(() => toast.classList.add("visible"), 20);
   window.setTimeout(() => {
     toast.classList.remove("visible");

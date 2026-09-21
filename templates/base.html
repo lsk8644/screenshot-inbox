@@ -16,9 +16,6 @@
         <span>Screenshot Inbox</span>
       </a>
       <div class="system-state">
-        <button class="notification-toggle" id="notification-toggle" type="button" hidden>
-          알림 켜기
-        </button>
         <span class="state-dot {{ 'online' if watch_directory else 'offline' }}"></span>
         <span>{{ 'Watching' if watch_directory else 'Directory not found' }}</span>
         <span class="provider-label">{{ provider }}</span>

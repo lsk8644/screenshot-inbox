@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from screenshot_inbox.analyzer import build_provider
 from screenshot_inbox.config import Settings
 from screenshot_inbox.database import ScreenshotDatabase
+from screenshot_inbox.notifications import notify_analysis_complete
 from screenshot_inbox.pipeline import AnalysisPipeline
 from screenshot_inbox.watcher import ScreenshotWatcher
 from screenshot_inbox.web import create_app
@@ -30,6 +31,7 @@ def build_application(project_root: Path | None = None) -> FastAPI:
         max_attempts=settings.max_analysis_attempts,
         stable_interval_seconds=settings.stable_interval_seconds,
         stable_checks=settings.stable_checks,
+        completion_notifier=notify_analysis_complete,
     )
     watcher: ScreenshotWatcher | None = None
     if settings.screenshot_dir is not None:

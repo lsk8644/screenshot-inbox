@@ -65,10 +65,7 @@ def test_inbox_detail_image_and_health(
     assert "analyzed_at" in script
     assert "refreshTimeline" in script
     assert "DOMParser" in script
-    assert "Notification.requestPermission" in script
-    assert "showSystemNotification" in script
     assert "1500" in script
-    assert 'id="notification-toggle"' in inbox_html
 
 
 def test_timeline_uses_seoul_date_and_24_hour_time() -> None:

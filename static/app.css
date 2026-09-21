@@ -38,8 +38,6 @@ button { font: inherit; }
 .state-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--danger); }
 .state-dot.online { background: var(--accent); }
 .provider-label { margin-left: 8px; padding-left: 14px; border-left: 1px solid var(--line); }
-.notification-toggle { padding: 5px 9px; color: var(--accent); background: transparent; border: 1px solid var(--line); font-size: .72rem; }
-.notification-toggle:disabled { cursor: not-allowed; color: var(--danger); opacity: .78; }
 .banner { padding: 10px clamp(18px, 4vw, 52px); background: #322913; color: #f9dda0; border-bottom: 1px solid #58471f; font-size: .88rem; }
 .banner code { font-family: "Cascadia Code", monospace; }
 

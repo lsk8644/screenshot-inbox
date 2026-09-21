@@ -5,6 +5,7 @@ import logging
 import queue
 import threading
 import time
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -34,12 +35,14 @@ class AnalysisPipeline:
         max_attempts: int = 3,
         stable_interval_seconds: float = 0.5,
         stable_checks: int = 3,
+        completion_notifier: Callable[[int, str], None] | None = None,
     ) -> None:
         self.database = database
         self.provider = provider
         self.max_attempts = max_attempts
         self.stable_interval_seconds = stable_interval_seconds
         self.stable_checks = stable_checks
+        self.completion_notifier = completion_notifier
         self.jobs: queue.Queue[int | None] = queue.Queue()
         self.worker = threading.Thread(target=self._worker, name="analysis-worker", daemon=True)
         self._started = False
@@ -108,6 +111,8 @@ class AnalysisPipeline:
             try:
                 result = self.provider.analyze(path)
                 self.database.mark_completed(screenshot_id, result.as_dict())
+                if self.completion_notifier is not None:
+                    self.completion_notifier(screenshot_id, result.title)
                 LOGGER.info(
                     "[DONE] category=%s confidence=%.2f", result.category, result.confidence
                 )
