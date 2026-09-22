@@ -52,7 +52,7 @@ screenshot-inbox
 
 Open [http://127.0.0.1:8765](http://127.0.0.1:8765). Keep the PowerShell window open. New PNG, JPG, JPEG, and WEBP screenshots appear automatically. The console logs `WATCH`, `NEW`, `QUEUE`, `ANALYZING`, `DONE`, `RETRY`, and `FAILED` events without logging credentials.
 
-The Inbox groups screenshots under `M.DD` headers using Asia/Seoul time and shows each event in 24-hour `HH:MM` format. Newer dates and screenshots appear first. Source filenames and filesystem paths remain hidden from the Inbox and detail UI. The trash button removes only the Inbox metadata, analysis, and local conversation; it never deletes the original screenshot file.
+The Inbox groups screenshots under `M.DD` headers using Asia/Seoul time and shows each event in 24-hour `HH:MM` format. Newer dates and screenshots appear first. Source filenames and filesystem paths remain hidden from the Inbox and detail UI. Individual trash buttons and the select-all bulk action remove only Inbox metadata, analysis, and local conversations; original screenshot files remain untouched. Dismissed content hashes are retained locally so startup recovery does not restore deleted Inbox entries.
 
 While an Inbox page is open, analysis status is polled locally every 1.5 seconds. Status memory survives navigation and automatic detail refreshes within the tab. A newly completed analysis appears as a clickable notification in the lower-right corner for six seconds; existing completed records do not trigger notifications on the first visit. When the Inbox timeline is visible, new screenshots and status changes refresh the timeline in place without a full-page reload.
 
@@ -75,6 +75,10 @@ python -m screenshot_inbox.main
 `launch_screenshot_inbox.ps1` checks the local health endpoint, starts Screenshot Inbox in the background when needed, waits until it is ready, and opens the Inbox in a standalone Edge or Chrome app window without browser tabs or an address bar. It falls back to the default browser only when neither app-capable browser is installed. A Windows shortcut can target PowerShell with this script so the app is available from a single desktop icon.
 
 The launcher also runs `register_notification_app.ps1`, which installs the current-user Start Menu shortcut required for a dedicated Windows toast identity. No administrator access or remote runtime is required.
+
+The same registration installs `Screenshot Inbox Background.lnk` in the current user's Startup folder. At Windows sign-in it launches `start_screenshot_inbox_background.ps1`, which starts only the hidden watcher and does not open a browser window. The normal Screenshot Inbox icon still opens the result window.
+
+The app stores a local watcher checkpoint. After the first checkpoint has been created, later starts scan only files created or changed since the previous start, recovering screenshots captured while the watcher was stopped without analyzing the entire historical folder.
 
 ## Screenshot directory detection
 

@@ -62,10 +62,12 @@ class AnalysisPipeline:
         self.worker.join(timeout=10)
         self._started = False
 
-    def ingest(self, path: Path) -> int | None:
+    def ingest(self, path: Path, *, assume_stable: bool = False) -> int | None:
         if not is_supported_image(path):
             return None
-        if not wait_until_stable(path, self.stable_interval_seconds, self.stable_checks):
+        if not assume_stable and not wait_until_stable(
+            path, self.stable_interval_seconds, self.stable_checks
+        ):
             LOGGER.warning("[FAILED] file did not become stable: %s", path.name)
             return None
         try:
@@ -76,6 +78,9 @@ class AnalysisPipeline:
         except (FileNotFoundError, PermissionError, OSError, UnidentifiedImageError) as exc:
             LOGGER.warning("[FAILED] unreadable image %s: %s", path.name, exc)
             return None
+        if self.database.is_dismissed(digest):
+            LOGGER.info("[NEW] dismissed screenshot ignored: %s", path.name)
+            return None
         created = datetime.fromtimestamp(stat.st_ctime, tz=UTC).isoformat()
         screenshot_id, inserted = self.database.insert_screenshot(path, digest, created)
         if not inserted:
@@ -85,6 +90,24 @@ class AnalysisPipeline:
         LOGGER.info("[QUEUE] id=%s", screenshot_id)
         self.jobs.put(screenshot_id)
         return screenshot_id
+
+    def reconcile_directory(self, directory: Path, since: datetime) -> int:
+        """Queue screenshots created or changed since the previous app start."""
+        before_count = self.database.count_screenshots()
+        for path in sorted(directory.iterdir()):
+            if not path.is_file() or not is_supported_image(path):
+                continue
+            try:
+                stat = path.stat()
+            except (FileNotFoundError, PermissionError, OSError):
+                continue
+            changed_at = datetime.fromtimestamp(max(stat.st_ctime, stat.st_mtime), tz=UTC)
+            if changed_at >= since:
+                self.ingest(path, assume_stable=True)
+        recovered = self.database.count_screenshots() - before_count
+        if recovered:
+            LOGGER.info("[RECOVERED] queued=%s", recovered)
+        return recovered
 
     def retry(self, screenshot_id: int) -> bool:
         if self.database.reset_for_retry(screenshot_id):

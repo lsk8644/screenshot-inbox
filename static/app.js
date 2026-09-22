@@ -29,6 +29,38 @@ document.querySelectorAll(".chat-form").forEach((form) => {
   });
 });
 
+const selectAllScreenshots = document.querySelector("#select-all-screenshots");
+const deleteSelected = document.querySelector("#delete-selected");
+
+function selectedScreenshotBoxes() {
+  return Array.from(document.querySelectorAll(".select-item"));
+}
+
+function updateBulkSelection() {
+  const boxes = selectedScreenshotBoxes();
+  const selectedCount = boxes.filter((box) => box.checked).length;
+  if (deleteSelected) {
+    deleteSelected.disabled = selectedCount === 0;
+    deleteSelected.textContent = selectedCount ? `선택 삭제 (${selectedCount})` : "선택 삭제";
+  }
+  if (selectAllScreenshots) {
+    selectAllScreenshots.checked = boxes.length > 0 && selectedCount === boxes.length;
+    selectAllScreenshots.indeterminate = selectedCount > 0 && selectedCount < boxes.length;
+  }
+}
+
+if (selectAllScreenshots) {
+  selectAllScreenshots.addEventListener("change", () => {
+    selectedScreenshotBoxes().forEach((box) => {
+      box.checked = selectAllScreenshots.checked;
+    });
+    updateBulkSelection();
+  });
+  document.addEventListener("change", (event) => {
+    if (event.target.matches?.(".select-item")) updateBulkSelection();
+  });
+}
+
 const toastRegion = document.querySelector("#toast-region");
 const storedStatuses = window.sessionStorage.getItem("screenshotInboxStatusesV2");
 let knownStatuses = new Map();

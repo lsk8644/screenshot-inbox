@@ -47,3 +47,11 @@ Educational screenshots must explain rather than merely transcribe. The provider
 ## D-012 — Safe local Markdown for chat
 
 Render a deliberately small Markdown subset for AI chat responses after HTML escaping: headings, lists, emphasis, inline code, blockquotes, and fenced code blocks. This keeps technical answers readable without trusting provider-generated HTML or requiring a browser CDN. Enter submits a question, Shift+Enter inserts a line break, and IME composition is never intercepted.
+
+## D-013 — Hidden login watcher and bounded catch-up
+
+Register a per-user Startup shortcut that launches the watcher without opening the browser. Keep the ordinary desktop/Start Menu shortcut responsible for opening the UI. Store a UTC checkpoint at successful watcher startup and, on later starts, reconcile only supported images created or changed since the previous checkpoint. Start the live watcher before reconciliation so files created during the scan are not missed.
+
+## D-014 — Reversible source preservation with dismissal history
+
+Inbox deletion removes SQLite screenshot metadata, analysis, and cascading conversation records but never moves or deletes the original image. Retain only the dismissed content hash in a separate local table so catch-up scanning cannot recreate an entry the user intentionally removed. Bulk deletion follows the same rule.

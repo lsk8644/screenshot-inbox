@@ -43,6 +43,14 @@ CREATE TABLE IF NOT EXISTS screenshot_messages (
 );
 CREATE INDEX IF NOT EXISTS idx_messages_screenshot
     ON screenshot_messages(screenshot_id, id);
+CREATE TABLE IF NOT EXISTS dismissed_screenshots (
+    file_hash TEXT PRIMARY KEY,
+    dismissed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS app_state (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
 """
 
 
@@ -140,6 +148,30 @@ class ScreenshotDatabase:
             ).fetchall()
         return [int(row["id"]) for row in rows]
 
+    def count_screenshots(self) -> int:
+        with self.connect() as connection:
+            row = connection.execute("SELECT COUNT(*) AS count FROM screenshots").fetchone()
+        return int(row["count"])
+
+    def is_dismissed(self, file_hash: str) -> bool:
+        with self.connect() as connection:
+            row = connection.execute(
+                "SELECT 1 FROM dismissed_screenshots WHERE file_hash=?", (file_hash,)
+            ).fetchone()
+        return row is not None
+
+    def get_state(self, key: str) -> str | None:
+        with self.connect() as connection:
+            row = connection.execute("SELECT value FROM app_state WHERE key=?", (key,)).fetchone()
+        return str(row["value"]) if row else None
+
+    def set_state(self, key: str, value: str) -> None:
+        self._write(
+            "INSERT INTO app_state(key, value) VALUES (?, ?) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+            (key, value),
+        )
+
     def mark_analyzing(self, screenshot_id: int, provider: str, model: str | None) -> None:
         self._write(
             "UPDATE screenshots SET status='analyzing', provider=?, model=?, error_message=NULL "
@@ -179,8 +211,27 @@ class ScreenshotDatabase:
         return cursor.rowcount == 1
 
     def delete_screenshot(self, screenshot_id: int) -> bool:
-        cursor = self._write("DELETE FROM screenshots WHERE id=?", (screenshot_id,))
-        return cursor.rowcount == 1
+        for attempt in range(self.lock_retries):
+            try:
+                with self.connect() as connection:
+                    row = connection.execute(
+                        "SELECT file_hash FROM screenshots WHERE id=?", (screenshot_id,)
+                    ).fetchone()
+                    if row is None:
+                        return False
+                    connection.execute(
+                        "INSERT OR IGNORE INTO dismissed_screenshots(file_hash) VALUES (?)",
+                        (row["file_hash"],),
+                    )
+                    cursor = connection.execute(
+                        "DELETE FROM screenshots WHERE id=?", (screenshot_id,)
+                    )
+                    return cursor.rowcount == 1
+            except sqlite3.OperationalError as exc:
+                if "locked" not in str(exc).lower() or attempt + 1 >= self.lock_retries:
+                    raise
+                time.sleep(0.05 * (2**attempt))
+        raise RuntimeError("unreachable")
 
     def add_chat_message(self, screenshot_id: int, role: str, content: str) -> int:
         if role not in {"user", "assistant"}:

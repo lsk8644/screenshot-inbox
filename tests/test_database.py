@@ -68,6 +68,10 @@ def test_chat_and_record_deletion_preserve_original_file(tmp_path: Path) -> None
     assert database.delete_screenshot(screenshot_id) is True
     assert database.get(screenshot_id) is None
     assert image.is_file()
+    assert database.is_dismissed("keep") is True
+    database.set_state("checkpoint", "2026-09-22T00:00:00+00:00")
+    assert database.get_state("checkpoint") == "2026-09-22T00:00:00+00:00"
+    assert database.count_screenshots() == 0
 
 
 def test_saved_mapping_strings_are_normalized_when_read(tmp_path: Path) -> None:

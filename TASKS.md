@@ -319,3 +319,12 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 - **Files:** Windows shortcut helper, registration and launcher scripts, notification module, tests, documentation
 - **Acceptance Criteria:** A per-user Start Menu shortcut contains ScreenshotInbox.Local; launcher registration requires no administrator access; the notifier uses the same ID; GitHub remains source backup only and runtime stays local.
 - **Status:** DONE
+
+### T-717
+- **Epic:** E2/E4/E8 — Background continuity and bulk Inbox management
+- **Title:** Recover downtime screenshots and support bulk dismissal
+- **Goal:** Keep screenshot monitoring active after Windows sign-in, recover screenshots captured during watcher downtime, and allow multiple Inbox records to be dismissed without touching source images.
+- **Dependencies:** T-103, T-203, T-402, T-716
+- **Files:** database, pipeline, application lifecycle, Windows launchers, Inbox template and script, tests, documentation
+- **Acceptance Criteria:** A per-user Startup shortcut launches the watcher without a browser; a stored checkpoint bounds catch-up scanning; dismissed hashes prevent deleted Inbox entries from returning; select-all bulk deletion removes only local Inbox records and conversations; original screenshots remain unchanged.
+- **Status:** DONE

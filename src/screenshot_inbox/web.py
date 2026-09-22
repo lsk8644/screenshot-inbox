@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 from urllib.parse import urlencode
 
 from fastapi import FastAPI, Form, HTTPException, Request
@@ -97,7 +97,7 @@ def render_markdown(value: str) -> Markup:
 
 def _with_seoul_timestamps(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     for item in items:
-        raw = item.get("detected_at")
+        raw = item.get("created_at") or item.get("detected_at")
         if not raw:
             item.update(date_key="", date_label="날짜 없음", time_label="--:--")
             continue
@@ -212,6 +212,14 @@ def create_app(
         if item is None:
             raise HTTPException(status_code=404, detail="Screenshot not found")
         database.delete_screenshot(screenshot_id)
+        return RedirectResponse("/", status_code=303)
+
+    @app.post("/screenshots/delete-selected")
+    def delete_selected(
+        screenshot_ids: Annotated[list[int] | None, Form()] = None,
+    ) -> RedirectResponse:
+        for screenshot_id in set(screenshot_ids or []):
+            database.delete_screenshot(screenshot_id)
         return RedirectResponse("/", status_code=303)
 
     @app.get("/api/health")

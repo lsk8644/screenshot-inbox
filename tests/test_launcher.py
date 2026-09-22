@@ -19,3 +19,9 @@ def test_desktop_launcher_prefers_standalone_browser_app_mode() -> None:
     assert "Windows\\Start Menu\\Programs" in registration
     assert "Screenshot Inbox.lnk" in registration
     assert "ShortcutRegistration" in registration
+    assert "Startup" in registration
+    assert "Screenshot Inbox Background.lnk" in registration
+    assert "start_screenshot_inbox_background.ps1" in registration
+
+    background = (root / "start_screenshot_inbox_background.ps1").read_text(encoding="utf-8")
+    assert "--app=" not in background

@@ -147,3 +147,33 @@ def test_chat_code_tabs_and_delete_keep_original(
     assert response.status_code == 303
     assert database.get(screenshot_id) is None
     assert image_path.is_file()
+
+
+def test_bulk_select_and_delete_preserve_originals(
+    tmp_path: Path, image_path: Path, project_root: Path = Path(__file__).parents[1]
+) -> None:
+    database = ScreenshotDatabase(tmp_path / "inbox.db")
+    database.initialize()
+    first_id, _ = database.insert_screenshot(
+        image_path, sha256_file(image_path), "2026-01-01T00:00:00+00:00"
+    )
+    second_path = tmp_path / "second.png"
+    second_path.write_bytes(image_path.read_bytes())
+    second_id, _ = database.insert_screenshot(
+        second_path, "different-hash", "2026-01-02T00:00:00+00:00"
+    )
+    pipeline = AnalysisPipeline(database, MockProvider())
+    client = TestClient(create_app(make_settings(project_root, database.path), database, pipeline))
+
+    inbox = client.get("/").text
+    assert 'id="select-all-screenshots"' in inbox
+    assert inbox.count('class="select-item"') == 2
+    response = client.post(
+        "/screenshots/delete-selected",
+        data={"screenshot_ids": [str(first_id), str(second_id)]},        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert database.list_screenshots() == []
+    assert image_path.is_file()
+    assert second_path.is_file()

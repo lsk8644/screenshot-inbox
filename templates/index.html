@@ -15,6 +15,16 @@
       {% endfor %}
     </nav>
 
+    {% if items %}
+      <form id="bulk-delete-form" action="/screenshots/delete-selected" method="post"
+            onsubmit="return confirm('선택한 Inbox 기록과 대화를 삭제할까요? 원본 스크린샷 파일은 유지됩니다.');">
+        <div class="bulk-actions">
+          <label><input id="select-all-screenshots" type="checkbox"> 모두 선택</label>
+          <button id="delete-selected" type="submit" disabled>선택 삭제</button>
+        </div>
+      </form>
+    {% endif %}
+
     <div class="timeline" aria-live="polite">
       {% set timeline = namespace(date_key='') %}
       {% for item in items %}
@@ -25,6 +35,8 @@
           {% set timeline.date_key = item.date_key %}
         {% endif %}
         <article class="timeline-item status-{{ item.status }}">
+          <input class="select-item" type="checkbox" name="screenshot_ids" value="{{ item.id }}"
+                 form="bulk-delete-form" aria-label="{{ item.title or '스크린샷' }} 선택">
           <time datetime="{{ item.detected_at_iso or item.detected_at }}">{{ item.time_label }}</time>
           <a class="thumb" href="/screenshots/{{ item.id }}" aria-label="Open {{ item.title or 'screenshot' }}">
             <img src="/screenshots/{{ item.id }}/image" alt="" loading="lazy">
