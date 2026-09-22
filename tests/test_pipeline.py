@@ -71,13 +71,32 @@ def test_retry_limit_marks_failed(tmp_path: Path, image_path: Path) -> None:
     database.initialize()
     screenshot_id, _ = database.insert_screenshot(image_path, sha256_file(image_path), "2026-01-01")
     provider = FailingProvider()
-    pipeline = AnalysisPipeline(database, provider, max_attempts=3)
+    pipeline = AnalysisPipeline(database, provider, max_attempts=3, deferred_retry_delays=())
     pipeline.process_now(screenshot_id, sleep=lambda _: None)
     record = database.get(screenshot_id)
     assert record is not None
     assert provider.calls == 3
     assert record["status"] == "failed"
     assert record["retry_count"] == 3
+
+
+def test_retryable_failure_is_deferred_without_blocking_worker(
+    tmp_path: Path, image_path: Path
+) -> None:
+    database = ScreenshotDatabase(tmp_path / "inbox.db")
+    database.initialize()
+    screenshot_id, _ = database.insert_screenshot(image_path, sha256_file(image_path), "2026-01-01")
+    provider = FailingProvider()
+    pipeline = AnalysisPipeline(database, provider, max_attempts=1, deferred_retry_delays=(3600.0,))
+
+    pipeline.process_now(screenshot_id, sleep=lambda _: None)
+    record = database.get(screenshot_id)
+    pipeline.stop()
+
+    assert record is not None
+    assert record["status"] == "pending"
+    assert record["deferred_retry_count"] == 1
+    assert record["next_retry_at"] is not None
 
 
 def test_reconcile_recovers_new_files_but_not_dismissed_files(

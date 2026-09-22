@@ -22,8 +22,10 @@ def make_settings(root: Path, database_path: Path) -> Settings:
         ai_api_key=None,
         ai_base_url="https://example.invalid/v1",
         ai_model=None,
+        ai_fallback_models=(),
         ai_timeout_seconds=1,
         max_analysis_attempts=3,
+        analysis_retry_delays_seconds=(60.0, 300.0, 900.0),
         stable_interval_seconds=0.01,
         stable_checks=1,
         host="127.0.0.1",
@@ -179,7 +181,8 @@ def test_bulk_select_and_delete_preserve_originals(
     assert '"Escape"' in script
     response = client.post(
         "/screenshots/delete-selected",
-        data={"screenshot_ids": [str(first_id), str(second_id)]},        follow_redirects=False,
+        data={"screenshot_ids": [str(first_id), str(second_id)]},
+        follow_redirects=False,
     )
 
     assert response.status_code == 303

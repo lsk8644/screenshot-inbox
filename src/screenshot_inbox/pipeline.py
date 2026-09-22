@@ -33,6 +33,7 @@ class AnalysisPipeline:
         provider: AnalyzerProvider,
         *,
         max_attempts: int = 3,
+        deferred_retry_delays: tuple[float, ...] = (60.0, 300.0, 900.0),
         stable_interval_seconds: float = 0.5,
         stable_checks: int = 3,
         completion_notifier: Callable[[int, str], None] | None = None,
@@ -40,22 +41,36 @@ class AnalysisPipeline:
         self.database = database
         self.provider = provider
         self.max_attempts = max_attempts
+        self.deferred_retry_delays = deferred_retry_delays
         self.stable_interval_seconds = stable_interval_seconds
         self.stable_checks = stable_checks
         self.completion_notifier = completion_notifier
         self.jobs: queue.Queue[int | None] = queue.Queue()
         self.worker = threading.Thread(target=self._worker, name="analysis-worker", daemon=True)
+        self._timers: list[threading.Timer] = []
         self._started = False
+
+    def _schedule_job(self, screenshot_id: int, delay_seconds: float) -> None:
+        if delay_seconds <= 0:
+            self.jobs.put(screenshot_id)
+            return
+        timer = threading.Timer(delay_seconds, self.jobs.put, args=(screenshot_id,))
+        timer.daemon = True
+        self._timers.append(timer)
+        timer.start()
 
     def start(self) -> None:
         if self._started:
             return
         self._started = True
         self.worker.start()
-        for screenshot_id in self.database.pending_ids():
-            self.jobs.put(screenshot_id)
+        for screenshot_id, delay_seconds in self.database.pending_jobs():
+            self._schedule_job(screenshot_id, delay_seconds)
 
     def stop(self) -> None:
+        for timer in self._timers:
+            timer.cancel()
+        self._timers.clear()
         if not self._started:
             return
         self.jobs.put(None)
@@ -126,6 +141,7 @@ class AnalysisPipeline:
             LOGGER.error("[FAILED] id=%s file missing", screenshot_id)
             return
         attempts = 0
+        retryable_failure = False
         last_error = "Analysis failed"
         while attempts < self.max_attempts:
             attempts += 1
@@ -133,7 +149,8 @@ class AnalysisPipeline:
             LOGGER.info("[ANALYZING] id=%s attempt=%s", screenshot_id, attempts)
             try:
                 result = self.provider.analyze(path)
-                self.database.mark_completed(screenshot_id, result.as_dict())
+                used_model = getattr(self.provider, "last_model_used", None)
+                self.database.mark_completed(screenshot_id, result.as_dict(), model=used_model)
                 if self.completion_notifier is not None:
                     self.completion_notifier(screenshot_id, result.title)
                 LOGGER.info(
@@ -142,6 +159,7 @@ class AnalysisPipeline:
                 return
             except ProviderError as exc:
                 last_error = str(exc)
+                retryable_failure = exc.retryable
                 if not exc.retryable or attempts >= self.max_attempts:
                     break
                 delay = min(8.0, float(2 ** (attempts - 1)))
@@ -149,8 +167,23 @@ class AnalysisPipeline:
                 sleep(delay)  # type: ignore[operator]
             except Exception as exc:
                 last_error = f"Unexpected analysis error: {exc}"
+                retryable_failure = False
                 LOGGER.exception("[FAILED] id=%s", screenshot_id)
                 break
+        record = self.database.get(screenshot_id)
+        deferred_count = int(record.get("deferred_retry_count", 0)) if record else 0
+        if retryable_failure and deferred_count < len(self.deferred_retry_delays):
+            delay = self.deferred_retry_delays[deferred_count]
+            self.database.defer_retry(screenshot_id, last_error, attempts, delay)
+            self._schedule_job(screenshot_id, delay)
+            LOGGER.warning(
+                "[DEFERRED] id=%s retry=%s in %.1fs: %s",
+                screenshot_id,
+                deferred_count + 1,
+                delay,
+                last_error,
+            )
+            return
         self.database.mark_failed(screenshot_id, last_error, attempts)
         LOGGER.error("[FAILED] id=%s attempts=%s: %s", screenshot_id, attempts, last_error)
 

@@ -55,3 +55,7 @@ Register a per-user Startup shortcut that launches the watcher without opening t
 ## D-014 — Reversible source preservation with dismissal history
 
 Inbox deletion removes SQLite screenshot metadata, analysis, and cascading conversation records but never moves or deletes the original image. Retain only the dismissed content hash in a separate local table so catch-up scanning cannot recreate an entry the user intentionally removed. Bulk deletion follows the same rule.
+
+## D-015 — Configurable failover with durable retry scheduling
+
+Keep model failover entirely configuration-driven so the OpenAI-compatible boundary remains vendor-neutral. Try fallback models only for retryable transport/provider failures. After immediate attempts are exhausted, persist the retry stage and due time in SQLite and release the worker; a daemon timer requeues the item while the process is alive, and startup reconstructs the remaining delay after interruption.

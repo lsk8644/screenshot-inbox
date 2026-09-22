@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 import mimetypes
 import urllib.error
 import urllib.request
@@ -10,6 +11,8 @@ from typing import Any
 
 from screenshot_inbox.providers.base import ProviderError
 from screenshot_inbox.schemas import AnalysisResult, parse_analysis
+
+LOGGER = logging.getLogger("screenshot_inbox")
 
 SYSTEM_PROMPT = """You analyze screenshots for a private local inbox. Return JSON only.
 Write title, summary, explanations, recommendations, answers, and every details value in natural
@@ -62,13 +65,24 @@ PROGRAMMING_MARKERS = (
 class OpenAICompatibleProvider:
     name = "openai-compatible"
 
-    def __init__(self, base_url: str, api_key: str, model: str, timeout: float = 60.0) -> None:
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        model: str,
+        timeout: float = 60.0,
+        fallback_models: tuple[str, ...] = (),
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model: str | None = model
         self.timeout = timeout
+        self.fallback_models = tuple(
+            candidate for candidate in dict.fromkeys(fallback_models) if candidate != model
+        )
+        self.last_model_used: str | None = None
 
-    def _complete(self, payload: dict[str, Any]) -> dict[str, Any]:
+    def _complete_once(self, payload: dict[str, Any]) -> dict[str, Any]:
         request = urllib.request.Request(
             f"{self.base_url}/chat/completions",
             data=json.dumps(payload).encode("utf-8"),
@@ -83,7 +97,7 @@ class OpenAICompatibleProvider:
                 body: Any = json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
             status = int(exc.code)
-            retryable = status in {429, 500, 502, 503}
+            retryable = status in {408, 429, 500, 502, 503, 504}
             if status in {400, 404, 415, 422}:
                 message = (
                     "Provider rejected the image or model request; "
@@ -101,6 +115,31 @@ class OpenAICompatibleProvider:
         if not isinstance(body, dict):
             raise ProviderError("Provider returned an unreadable response")
         return body
+
+    def _complete(self, payload: dict[str, Any]) -> dict[str, Any]:
+        primary = str(payload.get("model") or self.model or "").strip()
+        candidates = tuple(dict.fromkeys((primary, *self.fallback_models)))
+        last_error: ProviderError | None = None
+        for index, candidate in enumerate(candidates):
+            candidate_payload = dict(payload)
+            candidate_payload["model"] = candidate
+            try:
+                body = self._complete_once(candidate_payload)
+                self.last_model_used = candidate
+                return body
+            except ProviderError as exc:
+                last_error = exc
+                if not exc.retryable or index + 1 >= len(candidates):
+                    raise
+                LOGGER.warning(
+                    "[FALLBACK] model=%s unavailable; trying model=%s: %s",
+                    candidate,
+                    candidates[index + 1],
+                    exc,
+                )
+        if last_error is not None:
+            raise last_error
+        raise ProviderError("No AI model is configured")
 
     @staticmethod
     def _message_text(body: dict[str, Any]) -> str:
@@ -123,9 +162,7 @@ class OpenAICompatibleProvider:
             return True
         if result.category != "problem":
             return False
-        visible_text = " ".join(
-            (result.title, result.summary, result.extracted_text)
-        ).lower()
+        visible_text = " ".join((result.title, result.summary, result.extracted_text)).lower()
         if any(marker in visible_text for marker in PROGRAMMING_MARKERS):
             return True
         section_markers = sum(

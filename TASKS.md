@@ -337,3 +337,12 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 - **Files:** Inbox template, JavaScript, styles, tests, documentation
 - **Acceptance Criteria:** The normal Inbox shows no checkboxes or trash controls; `⋮` → `항목 선택` reveals a contextual toolbar with selection count, select-all, and trash; clicking rows toggles selection; Cancel and Escape restore normal mode; deletion still preserves every source screenshot.
 - **Status:** DONE
+
+### T-719
+- **Epic:** E3/E6 — Provider resilience
+- **Title:** Add configurable model fallback and durable delayed retries
+- **Goal:** Recover automatically from transient AI provider overload without blocking newer screenshot analysis or requiring the result window to stay open.
+- **Dependencies:** T-301, T-717
+- **Files:** configuration, provider, database, pipeline, tests, documentation
+- **Acceptance Criteria:** Retryable provider failures try configured fallback models in order; exhausted requests remain pending for configurable delayed retries; retry stage and due time survive restart; waiting never blocks the single analysis worker; credentials and source screenshots remain untouched.
+- **Status:** DONE

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import io
 import json
+import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -53,19 +55,13 @@ class AnalysisResponse(FakeResponse):
 
     def read(self) -> bytes:
         return json.dumps(
-            {
-                "choices": [
-                    {"message": {"content": json.dumps(self.analysis, ensure_ascii=False)}}
-                ]
-            }
+            {"choices": [{"message": {"content": json.dumps(self.analysis, ensure_ascii=False)}}]}
         ).encode()
 
 
 class InvalidAnalysisResponse(FakeResponse):
     def read(self) -> bytes:
-        return json.dumps(
-            {"choices": [{"message": {"content": "{not valid json"}}]}
-        ).encode()
+        return json.dumps({"choices": [{"message": {"content": "{not valid json"}}]}).encode()
 
 
 def test_provider_requests_compact_json_with_sufficient_output_budget(
@@ -167,9 +163,7 @@ def test_provider_repairs_misclassified_programming_problem(
     assert "top-level category value" in payloads[1]["messages"][0]["content"]
 
 
-def test_provider_marks_malformed_analysis_as_retryable(
-    tmp_path: Path, monkeypatch: Any
-) -> None:
+def test_provider_marks_malformed_analysis_as_retryable(tmp_path: Path, monkeypatch: Any) -> None:
     image = tmp_path / "problem.png"
     image.write_bytes(b"fixture")
     monkeypatch.setattr(
@@ -183,3 +177,39 @@ def test_provider_marks_malformed_analysis_as_retryable(
         provider.analyze(image)
 
     assert error.value.retryable is True
+
+
+def test_provider_uses_fallback_model_after_retryable_error(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
+    image = tmp_path / "fixture.png"
+    image.write_bytes(b"fixture")
+    requested_models: list[str] = []
+
+    def fake_urlopen(request: urllib.request.Request, timeout: float) -> FakeResponse:
+        payload = json.loads(request.data or b"{}")
+        requested_models.append(payload["model"])
+        if payload["model"] == "primary":
+            raise urllib.error.HTTPError(
+                request.full_url,
+                503,
+                "Service Unavailable",
+                {},
+                io.BytesIO(b'{"error":{"message":"high demand"}}'),
+            )
+        return FakeResponse()
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    provider = OpenAICompatibleProvider(
+        "https://example.invalid/v1",
+        "secret",
+        "primary",
+        12,
+        fallback_models=("backup",),
+    )
+
+    result = provider.analyze(image)
+
+    assert result.category == "other"
+    assert requested_models == ["primary", "backup"]
+    assert provider.last_model_used == "backup"

@@ -31,6 +31,7 @@ def build_application(project_root: Path | None = None) -> FastAPI:
         database,
         build_provider(settings),
         max_attempts=settings.max_analysis_attempts,
+        deferred_retry_delays=settings.analysis_retry_delays_seconds,
         stable_interval_seconds=settings.stable_interval_seconds,
         stable_checks=settings.stable_checks,
         completion_notifier=notify_analysis_complete,

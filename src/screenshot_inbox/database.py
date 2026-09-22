@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS screenshots (
     model TEXT,
     error_message TEXT,
     retry_count INTEGER NOT NULL DEFAULT 0,
+    deferred_retry_count INTEGER NOT NULL DEFAULT 0,
+    next_retry_at TEXT,
     analyzed_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_screenshots_detected ON screenshots(detected_at DESC, id DESC);
@@ -75,9 +77,21 @@ class ScreenshotDatabase:
     def initialize(self) -> None:
         with self.connect() as connection:
             connection.executescript(SCHEMA)
+            columns = {
+                str(row["name"])
+                for row in connection.execute("PRAGMA table_info(screenshots)").fetchall()
+            }
+            if "deferred_retry_count" not in columns:
+                connection.execute(
+                    "ALTER TABLE screenshots ADD COLUMN deferred_retry_count "
+                    "INTEGER NOT NULL DEFAULT 0"
+                )
+            if "next_retry_at" not in columns:
+                connection.execute("ALTER TABLE screenshots ADD COLUMN next_retry_at TEXT")
             connection.execute(
                 "UPDATE screenshots SET status='pending', error_message="
-                "'Recovered after application restart' WHERE status='analyzing'"
+                "'Recovered after application restart', next_retry_at=NULL "
+                "WHERE status='analyzing'"
             )
 
     def _write(self, sql: str, parameters: tuple[Any, ...]) -> sqlite3.Cursor:
@@ -142,11 +156,18 @@ class ScreenshotDatabase:
         return [self._decode(row) for row in rows]
 
     def pending_ids(self) -> list[int]:
+        return [screenshot_id for screenshot_id, _ in self.pending_jobs()]
+
+    def pending_jobs(self) -> list[tuple[int, float]]:
         with self.connect() as connection:
             rows = connection.execute(
-                "SELECT id FROM screenshots WHERE status='pending' ORDER BY id"
+                """SELECT id, MAX(
+                    0.0,
+                    COALESCE((julianday(next_retry_at) - julianday('now')) * 86400.0, 0.0)
+                ) AS delay_seconds
+                FROM screenshots WHERE status='pending' ORDER BY id"""
             ).fetchall()
-        return [int(row["id"]) for row in rows]
+        return [(int(row["id"]), float(row["delay_seconds"])) for row in rows]
 
     def count_screenshots(self) -> int:
         with self.connect() as connection:
@@ -174,15 +195,18 @@ class ScreenshotDatabase:
 
     def mark_analyzing(self, screenshot_id: int, provider: str, model: str | None) -> None:
         self._write(
-            "UPDATE screenshots SET status='analyzing', provider=?, model=?, error_message=NULL "
-            "WHERE id=?",
+            "UPDATE screenshots SET status='analyzing', provider=?, model=?, error_message=NULL, "
+            "next_retry_at=NULL WHERE id=?",
             (provider, model, screenshot_id),
         )
 
-    def mark_completed(self, screenshot_id: int, result: dict[str, Any]) -> None:
+    def mark_completed(
+        self, screenshot_id: int, result: dict[str, Any], model: str | None = None
+    ) -> None:
         self._write(
             """UPDATE screenshots SET status='completed', category=?, confidence=?, title=?,
             summary=?, extracted_text=?, analysis_json=?, error_message=NULL,
+            model=COALESCE(?, model), next_retry_at=NULL,
             analyzed_at=CURRENT_TIMESTAMP WHERE id=?""",
             (
                 result["category"],
@@ -191,6 +215,7 @@ class ScreenshotDatabase:
                 result["summary"],
                 result["extracted_text"],
                 json.dumps(result, ensure_ascii=False),
+                model,
                 screenshot_id,
             ),
         )
@@ -198,13 +223,26 @@ class ScreenshotDatabase:
     def mark_failed(self, screenshot_id: int, message: str, retry_count: int) -> None:
         self._write(
             "UPDATE screenshots SET status='failed', error_message=?, retry_count=?, "
-            "analyzed_at=CURRENT_TIMESTAMP WHERE id=?",
+            "next_retry_at=NULL, analyzed_at=CURRENT_TIMESTAMP WHERE id=?",
             (message[:1000], retry_count, screenshot_id),
+        )
+
+    def defer_retry(
+        self, screenshot_id: int, message: str, retry_count: int, delay_seconds: float
+    ) -> None:
+        modifier = f"+{max(0.0, delay_seconds):.3f} seconds"
+        self._write(
+            """UPDATE screenshots SET status='pending', error_message=?, retry_count=?,
+            deferred_retry_count=deferred_retry_count + 1,
+            next_retry_at=datetime('now', ?), analyzed_at=CURRENT_TIMESTAMP
+            WHERE id=?""",
+            (message[:1000], retry_count, modifier, screenshot_id),
         )
 
     def reset_for_retry(self, screenshot_id: int) -> bool:
         cursor = self._write(
-            "UPDATE screenshots SET status='pending', error_message=NULL "
+            "UPDATE screenshots SET status='pending', error_message=NULL, retry_count=0, "
+            "deferred_retry_count=0, next_retry_at=NULL "
             "WHERE id=? AND status IN ('failed', 'completed')",
             (screenshot_id,),
         )
@@ -247,8 +285,7 @@ class ScreenshotDatabase:
     def list_chat_messages(self, screenshot_id: int, limit: int = 40) -> list[dict[str, Any]]:
         with self.connect() as connection:
             rows = connection.execute(
-                "SELECT * FROM screenshot_messages WHERE screenshot_id=? "
-                "ORDER BY id DESC LIMIT ?",
+                "SELECT * FROM screenshot_messages WHERE screenshot_id=? ORDER BY id DESC LIMIT ?",
                 (screenshot_id, limit),
             ).fetchall()
         return [dict(row) for row in reversed(rows)]

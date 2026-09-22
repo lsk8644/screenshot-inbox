@@ -45,6 +45,25 @@ def test_status_updates(tmp_path: Path) -> None:
     assert database.get(screenshot_id)["status"] == "pending"  # type: ignore[index]
 
 
+def test_deferred_retry_is_persisted_and_reset(tmp_path: Path) -> None:
+    database = ScreenshotDatabase(tmp_path / "inbox.db")
+    database.initialize()
+    screenshot_id, _ = database.insert_screenshot(
+        tmp_path / "retry.png", "retry-hash", "2026-01-01"
+    )
+
+    database.defer_retry(screenshot_id, "temporary overload", 3, 300.0)
+    record = database.get(screenshot_id)
+
+    assert record is not None
+    assert record["status"] == "pending"
+    assert record["deferred_retry_count"] == 1
+    assert record["next_retry_at"] is not None
+    pending = database.pending_jobs()
+    assert pending[0][0] == screenshot_id
+    assert 295.0 <= pending[0][1] <= 300.0
+
+
 def test_failed_items_are_in_error_filter(tmp_path: Path) -> None:
     database = ScreenshotDatabase(tmp_path / "inbox.db")
     database.initialize()
@@ -86,9 +105,7 @@ def test_saved_mapping_strings_are_normalized_when_read(tmp_path: Path) -> None:
             "title": "Amdahl",
             "summary": "설명",
             "extracted_text": "",
-            "details": {
-                "term_explanations": ["{'Speedup': '개선 전후의 성능 비율입니다.'}"]
-            },
+            "details": {"term_explanations": ["{'Speedup': '개선 전후의 성능 비율입니다.'}"]},
         },
     )
     record = database.get(screenshot_id)

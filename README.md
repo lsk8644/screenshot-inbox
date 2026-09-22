@@ -112,12 +112,15 @@ AI_PROVIDER=openai-compatible
 AI_API_KEY=
 AI_BASE_URL=https://api.openai.com/v1
 AI_MODEL=your-vision-capable-model
+AI_FALLBACK_MODELS=another-vision-model,third-vision-model
+ANALYSIS_RETRY_DELAYS_SECONDS=60,300,900
 ```
 
 For NVIDIA Build or another OpenAI-compatible service, use that service's documented `/v1` base URL and a model that accepts image input. No endpoint or model name is hard-coded. Credentials are sent in the `Authorization` header and are not written to SQLite or logs.
 
-## Data and privacy
+When a request fails with a retryable provider error such as 429, 5xx, or a timeout, the configured fallback models are tried in order. If every model remains unavailable after the immediate attempt limit, the Inbox keeps the item pending and schedules later attempts using `ANALYSIS_RETRY_DELAYS_SECONDS`. The next retry time and stage are stored in SQLite, so restarting the app does not lose the schedule or block analysis of newer screenshots.
 
+## Data and privacy
 - SQLite is stored at `data/screenshot_inbox.db` unless `DATA_DIR` changes it.
 - The database contains file paths, hashes, states, extracted text, structured analysis, timestamps, and provider/model metadata.
 - Image bytes remain only in their original Windows files.

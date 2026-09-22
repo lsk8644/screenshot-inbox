@@ -37,5 +37,6 @@ def build_provider(settings: Settings) -> AnalyzerProvider:
             settings.ai_api_key,
             settings.ai_model,
             settings.ai_timeout_seconds,
+            fallback_models=settings.ai_fallback_models,
         )
     return UnavailableProvider(f"Unknown AI_PROVIDER: {settings.ai_provider}")
