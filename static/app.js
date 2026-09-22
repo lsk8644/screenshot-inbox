@@ -29,8 +29,14 @@ document.querySelectorAll(".chat-form").forEach((form) => {
   });
 });
 
+const inboxMenuButton = document.querySelector("#inbox-menu-button");
+const inboxMenuPopover = document.querySelector("#inbox-menu-popover");
+const enterSelectionMode = document.querySelector("#enter-selection-mode");
+const bulkDeleteForm = document.querySelector("#bulk-delete-form");
+const cancelSelectionMode = document.querySelector("#cancel-selection-mode");
 const selectAllScreenshots = document.querySelector("#select-all-screenshots");
 const deleteSelected = document.querySelector("#delete-selected");
+const selectionCount = document.querySelector("#selection-count");
 
 function selectedScreenshotBoxes() {
   return Array.from(document.querySelectorAll(".select-item"));
@@ -41,13 +47,46 @@ function updateBulkSelection() {
   const selectedCount = boxes.filter((box) => box.checked).length;
   if (deleteSelected) {
     deleteSelected.disabled = selectedCount === 0;
-    deleteSelected.textContent = selectedCount ? `선택 삭제 (${selectedCount})` : "선택 삭제";
   }
+  if (selectionCount) selectionCount.textContent = `${selectedCount}개 선택`;
   if (selectAllScreenshots) {
     selectAllScreenshots.checked = boxes.length > 0 && selectedCount === boxes.length;
     selectAllScreenshots.indeterminate = selectedCount > 0 && selectedCount < boxes.length;
   }
 }
+
+function closeInboxMenu() {
+  if (inboxMenuPopover) inboxMenuPopover.hidden = true;
+  if (inboxMenuButton) inboxMenuButton.setAttribute("aria-expanded", "false");
+}
+
+function exitSelectionMode() {
+  document.body.classList.remove("selection-mode");
+  if (bulkDeleteForm) bulkDeleteForm.hidden = true;
+  selectedScreenshotBoxes().forEach((box) => {
+    box.checked = false;
+  });
+  updateBulkSelection();
+}
+
+if (inboxMenuButton && inboxMenuPopover) {
+  inboxMenuButton.addEventListener("click", () => {
+    const willOpen = inboxMenuPopover.hidden;
+    inboxMenuPopover.hidden = !willOpen;
+    inboxMenuButton.setAttribute("aria-expanded", String(willOpen));
+  });
+}
+
+if (enterSelectionMode && bulkDeleteForm) {
+  enterSelectionMode.addEventListener("click", () => {
+    closeInboxMenu();
+    document.body.classList.add("selection-mode");
+    bulkDeleteForm.hidden = false;
+    updateBulkSelection();
+  });
+}
+
+if (cancelSelectionMode) cancelSelectionMode.addEventListener("click", exitSelectionMode);
 
 if (selectAllScreenshots) {
   selectAllScreenshots.addEventListener("change", () => {
@@ -56,10 +95,35 @@ if (selectAllScreenshots) {
     });
     updateBulkSelection();
   });
-  document.addEventListener("change", (event) => {
-    if (event.target.matches?.(".select-item")) updateBulkSelection();
-  });
 }
+
+document.addEventListener("change", (event) => {
+  if (event.target.matches?.(".select-item")) updateBulkSelection();
+});
+
+document.addEventListener("click", (event) => {
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+  if (!target.closest(".inbox-menu")) closeInboxMenu();
+  if (!document.body.classList.contains("selection-mode")) return;
+  const row = target.closest(".timeline-item");
+  if (!row || target.matches(".select-item") || target.closest("button, input, label")) return;
+  event.preventDefault();
+  const box = row.querySelector(".select-item");
+  if (box) {
+    box.checked = !box.checked;
+    updateBulkSelection();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  if (document.body.classList.contains("selection-mode")) {
+    exitSelectionMode();
+  } else {
+    closeInboxMenu();
+  }
+});
 
 const toastRegion = document.querySelector("#toast-region");
 const storedStatuses = window.sessionStorage.getItem("screenshotInboxStatusesV2");
@@ -98,7 +162,10 @@ async function refreshTimeline() {
     const documentText = await response.text();
     const updatedDocument = new DOMParser().parseFromString(documentText, "text/html");
     const updatedTimeline = updatedDocument.querySelector(".timeline");
-    if (updatedTimeline) timeline.replaceChildren(...updatedTimeline.childNodes);
+    if (updatedTimeline) {
+      timeline.replaceChildren(...updatedTimeline.childNodes);
+      updateBulkSelection();
+    }
   } catch (_error) {
     // The next status poll will retry.
   }

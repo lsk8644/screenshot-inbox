@@ -328,3 +328,12 @@ E1..E6 ------------------------------------> E7/E8 verification and docs
 - **Files:** database, pipeline, application lifecycle, Windows launchers, Inbox template and script, tests, documentation
 - **Acceptance Criteria:** A per-user Startup shortcut launches the watcher without a browser; a stored checkpoint bounds catch-up scanning; dismissed hashes prevent deleted Inbox entries from returning; select-all bulk deletion removes only local Inbox records and conversations; original screenshots remain unchanged.
 - **Status:** DONE
+
+### T-718
+- **Epic:** E4/E8 — Contextual Inbox controls
+- **Title:** Hide destructive controls behind Inbox selection mode
+- **Goal:** Keep the normal timeline visually quiet while making bulk dismissal easy to discover from a top-right overflow menu.
+- **Dependencies:** T-717
+- **Files:** Inbox template, JavaScript, styles, tests, documentation
+- **Acceptance Criteria:** The normal Inbox shows no checkboxes or trash controls; `⋮` → `항목 선택` reveals a contextual toolbar with selection count, select-all, and trash; clicking rows toggles selection; Cancel and Escape restore normal mode; deletion still preserves every source screenshot.
+- **Status:** DONE

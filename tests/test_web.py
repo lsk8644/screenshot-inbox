@@ -166,8 +166,17 @@ def test_bulk_select_and_delete_preserve_originals(
     client = TestClient(create_app(make_settings(project_root, database.path), database, pipeline))
 
     inbox = client.get("/").text
+    assert 'id="inbox-menu-button"' in inbox
+    assert 'id="inbox-menu-popover" hidden' in inbox
+    assert 'class="selection-toolbar"' in inbox
+    assert 'method="post" hidden' in inbox
     assert 'id="select-all-screenshots"' in inbox
     assert inbox.count('class="select-item"') == 2
+    assert 'class="delete-form"' not in inbox
+    script = client.get("/static/app.js").text
+    assert "enter-selection-mode" in script
+    assert "selection-mode" in script
+    assert '"Escape"' in script
     response = client.post(
         "/screenshots/delete-selected",
         data={"screenshot_ids": [str(first_id), str(second_id)]},        follow_redirects=False,

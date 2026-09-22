@@ -7,6 +7,15 @@
         <p class="eyebrow">LOCAL TIMELINE</p>
         <h1>Inbox</h1>
       </div>
+      {% if items %}
+        <div class="inbox-menu">
+          <button class="overflow-button" id="inbox-menu-button" type="button"
+                  aria-label="Inbox 작업 메뉴" aria-expanded="false" aria-controls="inbox-menu-popover">⋮</button>
+          <div class="inbox-menu-popover" id="inbox-menu-popover" hidden>
+            <button id="enter-selection-mode" type="button">항목 선택</button>
+          </div>
+        </div>
+      {% endif %}
     </div>
     <nav class="filters" aria-label="Filter screenshots by category">
       <a href="/" class="filter {{ 'active' if not selected_category }}">All</a>
@@ -16,11 +25,17 @@
     </nav>
 
     {% if items %}
-      <form id="bulk-delete-form" action="/screenshots/delete-selected" method="post"
+      <form class="selection-toolbar" id="bulk-delete-form" action="/screenshots/delete-selected"
+            method="post" hidden
             onsubmit="return confirm('선택한 Inbox 기록과 대화를 삭제할까요? 원본 스크린샷 파일은 유지됩니다.');">
-        <div class="bulk-actions">
+        <div class="selection-summary">
+          <button class="selection-cancel" id="cancel-selection-mode" type="button" aria-label="선택 취소">×</button>
+          <strong id="selection-count">0개 선택</strong>
+        </div>
+        <div class="selection-actions">
           <label><input id="select-all-screenshots" type="checkbox"> 모두 선택</label>
-          <button id="delete-selected" type="submit" disabled>선택 삭제</button>
+          <button class="bulk-trash-button" id="delete-selected" type="submit" disabled
+                  title="선택 항목을 Inbox에서 삭제" aria-label="선택 항목 삭제">🗑</button>
         </div>
       </form>
     {% endif %}
@@ -48,11 +63,6 @@
             </div>
             <p>{{ item.summary or item.error_message or 'Waiting for analysis…' }}</p>
           </a>
-          <form class="delete-form" action="/screenshots/{{ item.id }}/delete" method="post"
-                onsubmit="return confirm('Inbox 기록과 대화를 삭제할까요? 원본 스크린샷 파일은 유지됩니다.');">
-            <button class="trash-button" type="submit" title="Inbox에서 삭제 (원본 파일 유지)"
-                    aria-label="{{ item.title or '스크린샷' }} Inbox 기록 삭제">🗑</button>
-          </form>
         </article>
       {% else %}
         <div class="empty-state">
